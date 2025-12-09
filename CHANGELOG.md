@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3] - 2025-12-09
+
+### Fixed
+- **Package Exports Configuration**: Fixed missing `.mjs` files in published package
+  - Added `tsup.config.ts` to properly configure build output extensions
+  - ESM format now correctly outputs `.mjs` files as specified in package.json exports
+  - CJS format continues to output `.js` files
+  - All package.json export paths now resolve correctly without warnings
+  - Fixes "invalid package.json configuration" warnings when importing the package
+
 ## [0.2.2] - 2025-12-09
 
 ### Changed

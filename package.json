@@ -1,6 +1,6 @@
 {
   "name": "@sebastianthiebaud/schema-versioned-storage",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "type": "module",
   "description": "Type-safe, versioned persisted state with automatic migrations",
   "main": "dist/index.js",
@@ -39,7 +39,7 @@
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts src/adapters/index.ts src/adapters/async-storage.ts src/adapters/local-storage.ts src/adapters/memory.ts src/react/index.tsx --format cjs,esm --dts",
+    "build": "tsup",
     "type-check": "tsc --noEmit",
     "format": "eslint \"**/*.{js,jsx,ts,tsx}\" --fix && prettier \"**/*.{js,jsx,ts,tsx,json}\" --write",
     "test": "vitest run",
