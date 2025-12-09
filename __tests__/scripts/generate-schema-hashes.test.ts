@@ -40,7 +40,7 @@ export const persistedSchema = z.object({
 
     const { stdout, stderr } = await execAsync(
       `npx tsx ${scriptPath} --schema-file ${schemaFile} --output-path ${outputPath} 2>&1 || true`,
-      { timeout: 15000 }, // 15 seconds - script has 10s timeout + overhead
+      { timeout: 30000 }, // 30 seconds - npx tsx may need to download + script timeout
     );
 
     // The script should generate a file (either with hash or template)
@@ -52,7 +52,7 @@ export const persistedSchema = z.object({
       // If file wasn't created, that's also acceptable for this test
       expect(error).toBeDefined();
     }
-  });
+  }, 60000); // Increase Vitest timeout for npx tsx download in CI
 
   it("should accept command line arguments", async () => {
     await writeFile(schemaFile, `export const test = 'schema';`);

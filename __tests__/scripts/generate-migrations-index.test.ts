@@ -32,6 +32,7 @@ describe("generate-migrations-index.ts", () => {
   it("should generate index file with no migrations", async () => {
     const { stdout, stderr } = await execAsync(
       `npx tsx ${scriptPath} --migrations-dir ${migrationsDir} --index-path ${indexPath}`,
+      { timeout: 30000 }, // 30 seconds - npx tsx may need to download
     );
 
     const indexContent = await readFile(indexPath, "utf-8");
@@ -39,7 +40,7 @@ describe("generate-migrations-index.ts", () => {
     expect(indexContent).toContain("getMigrations");
     expect(indexContent).toContain("getCurrentSchemaVersion");
     expect(indexContent).toContain("return 1"); // Default version when no migrations
-  });
+  }, 60000); // Increase Vitest timeout for npx tsx download in CI
 
   it("should generate index file with single migration", async () => {
     // Create a migration file
