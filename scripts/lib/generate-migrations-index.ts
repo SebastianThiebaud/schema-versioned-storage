@@ -230,11 +230,20 @@ export async function generateMigrationsIndex(
 
 // CLI entry point - run when executed directly
 // Check if this file is being run as a script (not imported)
-// When run with tsx, process.argv[1] will be the tsx binary, but the file path will be in argv[2]
-const scriptPath = process.argv[1] || process.argv[2] || "";
-const isMainModule =
-  scriptPath.includes("generate-migrations-index.ts") ||
-  import.meta.url.endsWith("generate-migrations-index.ts");
+const isMainModule = (() => {
+  // Check if the script name appears in process.argv (when run with tsx/node)
+  // This works because when imported, the script path won't be in argv
+  const allArgs = process.argv.join(" ");
+  const isExecuted = allArgs.includes("generate-migrations-index.ts");
+  
+  // Only run if executed AND not in a test environment where we're importing the module
+  // We check for VITEST but allow it if the script is explicitly being run
+  if (process.env.VITEST && !isExecuted) {
+    return false;
+  }
+  
+  return isExecuted;
+})();
 
 if (isMainModule) {
   // Parse CLI arguments and pass them to generateMigrationsIndex
