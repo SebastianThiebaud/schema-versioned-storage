@@ -2,12 +2,27 @@ import { readdir, readFile, writeFile, mkdir } from "fs/promises";
 import { readFileSync } from "fs";
 import { dirname, resolve } from "path";
 
+/**
+ * Get the package name from package.json to use as default typesPath
+ */
+function getPackageName(cwd: string = process.cwd()): string {
+  try {
+    const packageJsonPath = resolve(cwd, "package.json");
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
+    return packageJson.name || "schema-versioned-storage";
+  } catch (error) {
+    return "schema-versioned-storage";
+  }
+}
+
 // Default configuration
-export const defaultConfig = {
-  migrationsDir: "./src/migrations",
-  indexPath: "./src/migrations/index.ts",
-  typesPath: "schema-versioned-storage", // Use package name by default
-};
+export function getDefaultConfig(cwd: string = process.cwd()) {
+  return {
+    migrationsDir: "./src/migrations",
+    indexPath: "./src/migrations/index.ts",
+    typesPath: getPackageName(cwd), // Use package name by default
+  };
+}
 
 export interface MigrationsConfig {
   migrationsDir: string;
@@ -55,7 +70,7 @@ export function parseArgs(
   cwd: string = process.cwd(),
 ): MigrationsConfig {
   // Start with defaults
-  let config: MigrationsConfig = { ...defaultConfig };
+  let config: MigrationsConfig = { ...getDefaultConfig(cwd) };
 
   // Load from package.json if available (lowest priority)
   const packageJsonConfig = loadPackageJsonConfig(cwd);
@@ -150,9 +165,8 @@ export function generateIndexContent(
     return `  registry.set(${version}, migration${index});`;
   });
 
-  // Use the package name for types import
-  // Consumers can override this if they have their own types
-  const typesPath = config.typesPath || "schema-versioned-storage";
+  // Use the configured typesPath (which defaults to package name)
+  const typesPath = config.typesPath;
 
   return `// Auto-generated file - do not edit manually
 // Run: npm run generate:migrations

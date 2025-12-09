@@ -1,7 +1,7 @@
 // Auto-generated file - do not edit manually
 // Run: npm run generate:migrations
 
-import type { Migration } from "schema-versioned-storage";
+import type { Migration } from "@sebastianthiebaud/schema-versioned-storage";
 
 const registry = new Map<number, Migration>();
 

@@ -18,12 +18,27 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+/**
+ * Get the package name from package.json to use as default typesPath
+ */
+function getPackageName() {
+  try {
+    const packageJsonPath = resolve(process.cwd(), 'package.json');
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+    return packageJson.name || 'schema-versioned-storage';
+  } catch (error) {
+    return 'schema-versioned-storage';
+  }
+}
+
 // Default configuration
-const defaultConfig = {
-  migrationsDir: './src/migrations',
-  indexPath: './src/migrations/index.ts',
-  typesPath: 'schema-versioned-storage', // Use package name by default
-};
+function getDefaultConfig() {
+  return {
+    migrationsDir: './src/migrations',
+    indexPath: './src/migrations/index.ts',
+    typesPath: getPackageName(), // Use package name by default
+  };
+}
 
 /**
  * Load configuration from package.json
@@ -62,7 +77,7 @@ function parseArgs() {
   const args = process.argv.slice(2);
   
   // Start with defaults
-  let config = { ...defaultConfig };
+  let config = { ...getDefaultConfig() };
   
   // Load from package.json if available (lowest priority)
   const packageJsonConfig = loadPackageJsonConfig();
@@ -147,9 +162,8 @@ function generateIndexContent(migrationFiles, config) {
     return `  registry.set(${version}, migration${index});`;
   });
 
-  // Use the package name for types import
-  // Consumers can override this if they have their own types
-  const typesPath = config.typesPath || 'schema-versioned-storage';
+  // Use the configured typesPath (which defaults to package name)
+  const typesPath = config.typesPath;
 
   return `// Auto-generated file - do not edit manually
 // Run: npm run generate:migrations
