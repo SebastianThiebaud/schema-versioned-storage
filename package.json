@@ -1,6 +1,7 @@
 {
   "name": "@sebastianthiebaud/schema-versioned-storage",
   "version": "0.2.0",
+  "type": "module",
   "description": "Type-safe, versioned persisted state with automatic migrations",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

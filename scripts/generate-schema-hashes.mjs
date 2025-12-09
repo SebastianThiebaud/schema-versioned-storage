@@ -207,60 +207,226 @@ async function generateSchemaHashes(schemaFile, outputPath) {
   const schemaPath = resolve(process.cwd(), schemaFile);
 
   try {
-    // Try to import the schema file
-    // Note: This requires the schema to be exported and the file to be transpiled
-    // For now, we'll read the file and try to extract the schema
-    const schemaContent = await readFile(schemaPath, 'utf-8');
-
-    // Try to dynamically import if it's a .ts file (requires ts-node or similar)
-    // For now, we'll use a simpler approach: require the user to provide a JS version
-    // or we'll parse the TypeScript file
-
-    // For this implementation, we'll create a template that the user needs to fill in
-    // or we'll try to use ts-node if available
+    // Try to import the schema file and compute hash
+    let hash;
     let schemaModule;
-    try {
-      // Try to require/import the schema
-      // This might fail if TypeScript isn't compiled
-      schemaModule = require(schemaPath.replace(/\.ts$/, '.js'));
-    } catch (e) {
-      // If that fails, try with ts-node
+    const isTypeScript = schemaPath.endsWith('.ts') || schemaPath.endsWith('.tsx');
+    
+    if (isTypeScript) {
+      // For TypeScript files, use tsx via npx to import and compute hash
       try {
-        require('ts-node/register');
-        delete require.cache[schemaPath];
+        const { execSync } = require('child_process');
+        const { writeFileSync, unlinkSync, existsSync } = require('fs');
+        const { join } = require('path');
+        const os = require('os');
+        
+        // Get package name - try to detect from installed package or use default
+        let packageName = '@sebastianthiebaud/schema-versioned-storage';
+        try {
+          // Try to find the package in node_modules
+          const fs = require('fs');
+          const path = require('path');
+          const nodeModulesPath = path.join(process.cwd(), 'node_modules');
+          
+          // Try scoped package first
+          let pkgPath = path.join(nodeModulesPath, '@sebastianthiebaud', 'schema-versioned-storage', 'package.json');
+          if (!fs.existsSync(pkgPath)) {
+            // Try unscoped
+            pkgPath = path.join(nodeModulesPath, 'schema-versioned-storage', 'package.json');
+          }
+          
+          if (fs.existsSync(pkgPath)) {
+            const installedPkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+            packageName = installedPkg.name;
+          }
+        } catch {
+          // Use default
+        }
+        
+        // Use tsx to import and compute hash inline
+        const pathUtil = require('path');
+        const fs = require('fs');
+        let tsxCommand = 'npx --yes tsx';
+        
+        // Check for tsx in local node_modules
+        const localTsx = pathUtil.join(process.cwd(), 'node_modules', '.bin', 'tsx');
+        if (fs.existsSync(localTsx)) {
+          tsxCommand = localTsx;
+        } else {
+          // Try global tsx
+          try {
+            execSync('tsx --version', { stdio: 'ignore' });
+            tsxCommand = 'tsx';
+          } catch {
+            // Use npx
+          }
+        }
+        
+        // Use relative path for import
+        const relativeSchemaPath = pathUtil.relative(process.cwd(), schemaPath).replace(/\\/g, '/');
+        const importPath = relativeSchemaPath.startsWith('.') ? relativeSchemaPath : `./${relativeSchemaPath}`;
+        
+        // Use tsx -e to execute inline code
+        const inlineScript = `import { persistedSchema } from '${importPath}'; import { hashSchema } from '${packageName}'; console.log(JSON.stringify({ hash: hashSchema(persistedSchema) }));`;
+        
+        try {
+          const result = execSync(`${tsxCommand} -e "${inlineScript.replace(/"/g, '\\"')}"`, {
+            encoding: 'utf-8',
+            cwd: process.cwd(),
+            stdio: ['ignore', 'pipe', 'pipe'],
+          });
+          
+          const output = result.trim();
+          if (output) {
+            const data = JSON.parse(output);
+            hash = data.hash;
+          } else {
+            throw new Error('No output from tsx script');
+          }
+        } catch (execError) {
+          // If tsx fails, try ts-node as fallback
+          try {
+            require('ts-node/register');
+            delete require.cache[schemaPath];
+            schemaModule = require(schemaPath);
+          } catch (tsNodeError) {
+            // Log the error for debugging
+            const errorMsg = execError.stderr ? execError.stderr.toString() : execError.message;
+            console.warn('Could not import TypeScript schema using tsx.');
+            if (errorMsg && !errorMsg.includes('tsx')) {
+              console.warn('Error:', errorMsg.substring(0, 200));
+            }
+            console.warn('Please install tsx: npm install --save-dev tsx');
+            console.warn('Or install ts-node: npm install --save-dev ts-node');
+            console.warn('Creating a template file that you can fill in manually.');
+            return generateTemplate(outputPath);
+          }
+        }
+      } catch (tsxError) {
+        // Fall back to ts-node if available
+        try {
+          require('ts-node/register');
+          delete require.cache[schemaPath];
+          schemaModule = require(schemaPath);
+        } catch (tsNodeError) {
+          console.warn(
+            'Could not import TypeScript schema. Please install tsx: npm install --save-dev tsx'
+          );
+          console.warn('Or install ts-node: npm install --save-dev ts-node');
+          console.warn('Creating a template file that you can fill in manually.');
+          return generateTemplate(outputPath);
+        }
+      }
+    } else {
+      // JavaScript file - try direct require
+      try {
         schemaModule = require(schemaPath);
-      } catch (e2) {
-        console.warn(
-          'Could not directly import schema. Please ensure the schema file is compiled or ts-node is available.'
-        );
-        console.warn('Creating a template file that you can fill in manually.');
+      } catch (e) {
+        console.warn('Could not import schema file.');
         return generateTemplate(outputPath);
       }
     }
 
-    const schema = schemaModule.persistedSchema || schemaModule.schema || schemaModule.default;
-    if (!schema) {
-      throw new Error('Schema not found in file. Expected export named "persistedSchema", "schema", or default.');
+    // If we don't have a hash yet, compute it from the schema
+    if (!hash) {
+      const schema = schemaModule.persistedSchema || schemaModule.schema || schemaModule.default;
+      if (!schema) {
+        throw new Error('Schema not found in file. Expected export named "persistedSchema", "schema", or default.');
+      }
+
+      // Compute hash using the shape extraction
+      const shape = extractSchemaShape(schema);
+      hash = simpleHash(shape);
     }
 
-    // For now, we'll generate a hash for the current version
-    // In a real implementation, you'd need to track all versions
-    const shape = extractSchemaShape(schema);
-    const hash = simpleHash(shape);
+    // Read existing hashes to preserve previous versions
+    let existingHashes = {};
+    try {
+      const existingContent = await readFile(outputPath, 'utf-8');
+      // Extract existing hashes using regex
+      const matches = existingContent.matchAll(/(\d+):\s*['"]([^'"]+)['"]/g);
+      for (const match of matches) {
+        existingHashes[Number(match[1])] = match[2];
+      }
+    } catch {
+      // File doesn't exist yet, start fresh
+    }
 
-    const content = `// Auto-generated file - do not edit manually
-// Run: npm run generate:schema-hashes
+    // Try to get current version from migrations if available
+    let currentVersion = 1;
+    try {
+      // Try to find migrations index to get current version
+      const migrationsIndexPath = resolve(process.cwd(), schemaFile.replace(/schema\.ts$/, 'migrations/index.ts'));
+      try {
+        const migrationsContent = await readFile(migrationsIndexPath, 'utf-8');
+        // Try to extract version from getCurrentSchemaVersion or registry
+        const versionMatch = migrationsContent.match(/getCurrentSchemaVersion\(\)[^}]*return\s+Math\.max\([^)]+\)/);
+        if (versionMatch) {
+          // Try to require and call it
+          try {
+            require('ts-node/register');
+            const migrationsModule = require(migrationsIndexPath);
+            if (typeof migrationsModule.getCurrentSchemaVersion === 'function') {
+              currentVersion = migrationsModule.getCurrentSchemaVersion();
+            }
+          } catch {
+            // Fall back to counting registry entries
+            const registryMatches = migrationsContent.matchAll(/registry\.set\((\d+),/g);
+            const versions = Array.from(registryMatches, m => Number(m[1]));
+            if (versions.length > 0) {
+              currentVersion = Math.max(...versions);
+            }
+          }
+        } else {
+          // Count registry entries as fallback
+          const registryMatches = migrationsContent.matchAll(/registry\.set\((\d+),/g);
+          const versions = Array.from(registryMatches, m => Number(m[1]));
+          if (versions.length > 0) {
+            currentVersion = Math.max(...versions);
+          }
+        }
+      } catch {
+        // Migrations file not found or can't be read
+      }
+    } catch {
+      // Couldn't determine version, use 1
+    }
 
+    // Update hash for current version
+    existingHashes[currentVersion] = hash;
+
+    // Generate file content with all versions
+    const versions = Object.keys(existingHashes)
+      .map(Number)
+      .sort((a, b) => a - b);
+
+    const hashesContent = versions
+      .map((v) => `  ${v}: '${existingHashes[v]}', // Hash for version ${v}`)
+      .join('\n');
+
+    const content = `/**
+ * Schema hashes for each version
+ *
+ * This file is AUTO-GENERATED by scripts/generate-schema-hashes.mjs
+ * DO NOT EDIT MANUALLY - run \`npm run generate:schema-hashes\` to regenerate
+ *
+ * This tracks the schema hash for each version to detect schema changes.
+ * When the schema changes, the hash changes, and a migration is required.
+ */
+
+/**
+ * Expected schema hash for each version
+ * Format: version -> schema hash at that version
+ */
 export const SCHEMA_HASHES_BY_VERSION: Record<number, string> = {
-  1: '${hash}',
-  // Add more versions as needed
+${hashesContent}
 };
 `;
 
     await mkdir(dirname(outputPath), { recursive: true });
     await writeFile(outputPath, content, 'utf-8');
     console.log(`Generated schema hashes file: ${outputPath}`);
-    console.log(`Hash for version 1: ${hash}`);
+    console.log(`Hash for version ${currentVersion}: ${hash}`);
   } catch (error) {
     console.error('Error generating schema hashes:', error);
     // Generate template as fallback

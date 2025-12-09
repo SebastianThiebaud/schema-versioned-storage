@@ -11,7 +11,7 @@
  */
 
 import { readdir, readFile, writeFile, mkdir } from 'fs/promises';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { join, dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -19,13 +19,41 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 /**
- * Get the package name from package.json to use as default typesPath
+ * Get the package name from the installed schema-versioned-storage package
+ * This ensures we use the correct package name (scoped or unscoped)
  */
 function getPackageName() {
   try {
+    // Try to find the installed package in node_modules
+    const nodeModulesPath = resolve(process.cwd(), 'node_modules');
+    
+    // Try scoped package first
+    let pkgPath = join(nodeModulesPath, '@sebastianthiebaud', 'schema-versioned-storage', 'package.json');
+    if (!existsSync(pkgPath)) {
+      // Try unscoped
+      pkgPath = join(nodeModulesPath, 'schema-versioned-storage', 'package.json');
+    }
+    
+    if (existsSync(pkgPath)) {
+      const packageJson = JSON.parse(readFileSync(pkgPath, 'utf-8'));
+      return packageJson.name || 'schema-versioned-storage';
+    }
+    
+    // Fallback: try to detect from dependencies
     const packageJsonPath = resolve(process.cwd(), 'package.json');
     const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
-    return packageJson.name || 'schema-versioned-storage';
+    const deps = { ...packageJson.dependencies, ...packageJson.devDependencies };
+    
+    // Find schema-versioned-storage in dependencies
+    const pkgKey = Object.keys(deps).find(key => 
+      key === 'schema-versioned-storage' || key === '@sebastianthiebaud/schema-versioned-storage'
+    );
+    
+    if (pkgKey) {
+      return pkgKey;
+    }
+    
+    return 'schema-versioned-storage';
   } catch (error) {
     return 'schema-versioned-storage';
   }
