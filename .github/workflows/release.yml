@@ -50,7 +50,16 @@ jobs:
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
-        run: npm publish
+        run: |
+          # Temporarily remove .npmrc to avoid scope registry override
+          if [ -f .npmrc ]; then
+            mv .npmrc .npmrc.backup
+          fi
+          npm publish --registry=https://registry.npmjs.org
+          # Restore .npmrc for GitHub Packages publish
+          if [ -f .npmrc.backup ]; then
+            mv .npmrc.backup .npmrc
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         continue-on-error: true
