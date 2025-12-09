@@ -1,0 +1,82 @@
+{
+  "name": "schema-versioned-storage",
+  "version": "0.1.0",
+  "description": "Type-safe, versioned persisted state with automatic migrations",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "module": "dist/index.mjs",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./adapters": {
+      "types": "./dist/adapters/index.d.ts",
+      "import": "./dist/adapters/index.mjs",
+      "require": "./dist/adapters/index.js"
+    },
+    "./adapters/async-storage": {
+      "types": "./dist/adapters/async-storage.d.ts",
+      "import": "./dist/adapters/async-storage.mjs",
+      "require": "./dist/adapters/async-storage.js"
+    },
+    "./adapters/local-storage": {
+      "types": "./dist/adapters/local-storage.d.ts",
+      "import": "./dist/adapters/local-storage.mjs",
+      "require": "./dist/adapters/local-storage.js"
+    },
+    "./adapters/memory": {
+      "types": "./dist/adapters/memory.d.ts",
+      "import": "./dist/adapters/memory.mjs",
+      "require": "./dist/adapters/memory.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts src/adapters/index.ts src/adapters/async-storage.ts src/adapters/local-storage.ts src/adapters/memory.ts --format cjs,esm --dts",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "generate:migrations": "node scripts/generate-migrations-index.mjs",
+    "generate:schema-hashes": "node scripts/generate-schema-hashes.mjs"
+  },
+  "keywords": [
+    "storage",
+    "persistence",
+    "schema",
+    "migrations",
+    "versioning",
+    "zod",
+    "typescript"
+  ],
+  "author": "Sebastian Thiebaud",
+  "license": "MIT",
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "peerDependencies": {
+    "@react-native-async-storage/async-storage": "^1.x.x"
+  },
+  "peerDependenciesMeta": {
+    "@react-native-async-storage/async-storage": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@react-native-async-storage/async-storage": "^2.2.0",
+    "@types/node": "^20.14.0",
+    "@vitest/coverage-v8": "^1.6.1",
+    "tsup": "^8.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "^1.6.0"
+  },
+  "files": [
+    "dist",
+    "scripts",
+    "templates",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ]
+}

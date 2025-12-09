@@ -1,0 +1,15 @@
+import type { PersistedSchema } from './schema';
+
+/**
+ * Create default values for your persisted schema
+ * @param version The current schema version
+ */
+export function createDefaults(version: number): PersistedSchema {
+  return {
+    _version: version,
+    // Add your default values here
+    // Example:
+    // preferences: { colorScheme: 'system' },
+  };
+}
+

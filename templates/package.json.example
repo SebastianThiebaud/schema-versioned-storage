@@ -1,0 +1,23 @@
+{
+  "name": "my-app",
+  "version": "1.0.0",
+  "scripts": {
+    "generate:migrations": "node node_modules/schema-versioned-storage/scripts/generate-migrations-index.mjs",
+    "generate:schema-hashes": "node node_modules/schema-versioned-storage/scripts/generate-schema-hashes.mjs"
+  },
+  "schemaVersionedStorage": {
+    "schema": {
+      "file": "./src/schema.ts",
+      "hashesOutput": "./src/schema-hashes.ts"
+    },
+    "defaults": {
+      "file": "./src/defaults.ts"
+    },
+    "migrations": {
+      "dir": "./src/migrations",
+      "indexPath": "./src/migrations/index.ts",
+      "typesPath": "schema-versioned-storage"
+    }
+  }
+}
+

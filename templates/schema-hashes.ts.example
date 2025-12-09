@@ -1,0 +1,13 @@
+// Auto-generated file - do not edit manually
+// Run: npm run generate:schema-hashes
+//
+// This file contains hashes for each schema version.
+// These hashes are used to detect schema changes.
+
+export const SCHEMA_HASHES_BY_VERSION: Record<number, string> = {
+  1: 'hash1',
+  // Add more versions as you create migrations
+  // 2: 'hash2',
+  // 3: 'hash3',
+};
+

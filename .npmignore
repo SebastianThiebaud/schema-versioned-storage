@@ -1,0 +1,13 @@
+src/
+__tests__/
+examples/
+*.test.ts
+*.test.mjs
+tsconfig.json
+.gitignore
+node_modules/
+coverage/
+PLAN.md
+vitest.config.ts
+.github/
+

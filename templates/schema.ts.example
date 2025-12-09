@@ -1,0 +1,17 @@
+import { z } from 'zod';
+
+/**
+ * Define your persisted schema here
+ * Make sure to include _version as a number field
+ */
+export const persistedSchema = z.object({
+  _version: z.number(),
+  // Add your schema fields here
+  // Example:
+  // preferences: z.object({
+  //   colorScheme: z.enum(['system', 'light', 'dark']).default('system'),
+  // }),
+});
+
+export type PersistedSchema = z.infer<typeof persistedSchema>;
+

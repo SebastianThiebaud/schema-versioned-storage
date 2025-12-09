@@ -1,0 +1,35 @@
+import type { Migration } from 'schema-versioned-storage';
+import type { PersistedSchema } from '../schema';
+
+/**
+ * Example migration from version 1 to version 2
+ * 
+ * This migration should:
+ * 1. Transform the old state structure to the new structure
+ * 2. Set _version to the new version number
+ * 3. Handle any missing fields with defaults
+ */
+const migration: Migration<PersistedSchema> = {
+  metadata: {
+    version: 2,
+    description: 'Example migration: add new field',
+  },
+  migrate: (state: unknown): PersistedSchema => {
+    const oldState = state as any;
+    
+    // Transform the state
+    return {
+      ...oldState,
+      _version: 2,
+      // Add any new fields with defaults
+      // Example:
+      // preferences: {
+      //   ...oldState.preferences,
+      //   colorScheme: oldState.preferences?.colorScheme || 'system',
+      // },
+    };
+  },
+};
+
+export default migration;
+
