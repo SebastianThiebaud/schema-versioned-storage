@@ -32,6 +32,11 @@ const storage = createPersistedState({ schema, /* ... */ });
 // ✅ Type-safe getter - autocomplete works!
 const colorScheme = storage.get('preferences').colorScheme;
 
+// ✅ Property-based access using getAll()
+const { preferences } = storage.getAll();
+const colorScheme2 = preferences.colorScheme;
+// Or: storage.getAll().preferences.colorScheme
+
 // ✅ Type-safe setter - TypeScript catches errors
 await storage.set('preferences', { colorScheme: 'dark' }); // ✅
 await storage.set('preferences', { colorScheme: 'invalid' }); // ❌ TypeScript error
@@ -231,8 +236,13 @@ await storage.init();
 ### 7. Use the storage
 
 ```typescript
-// Get values
+// Get values - method-based access
 const colorScheme = storage.get('preferences').colorScheme;
+
+// Get values - property-based access using getAll()
+const { preferences } = storage.getAll();
+const colorScheme2 = preferences.colorScheme;
+// Or access directly: storage.getAll().preferences.colorScheme
 
 // Set values
 await storage.set('preferences', {
@@ -320,7 +330,29 @@ Initialize the storage. Must be called before using other methods.
 
 #### `get<K>(key: K): TSchema[K]`
 
-Get a value from the state.
+Get a value from the state using method-based access.
+
+**Example:**
+```typescript
+const colorScheme = storage.get('preferences').colorScheme;
+```
+
+#### `getAll(): TSchema`
+
+Get all state as an object. Useful for property-based access or when you need multiple values.
+
+**Example:**
+```typescript
+// Property-based access
+const { preferences } = storage.getAll();
+const colorScheme = preferences.colorScheme;
+
+// Or access directly
+const colorScheme = storage.getAll().preferences.colorScheme;
+
+// Get all state for destructuring
+const allState = storage.getAll();
+```
 
 #### `set<K>(key: K, value: TSchema[K]): Promise<void>`
 
