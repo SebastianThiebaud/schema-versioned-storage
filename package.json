@@ -1,5 +1,5 @@
 {
-  "name": "schema-versioned-storage",
+  "name": "@sebastianthiebaud/schema-versioned-storage",
   "version": "0.1.2",
   "description": "Type-safe, versioned persisted state with automatic migrations",
   "main": "dist/index.js",

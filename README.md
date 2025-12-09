@@ -14,7 +14,7 @@ Type-safe, versioned persisted state with automatic migrations for TypeScript ap
 ## Installation
 
 ```bash
-npm install schema-versioned-storage zod
+npm install @sebastianthiebaud/schema-versioned-storage zod
 ```
 
 For React Native, also install:

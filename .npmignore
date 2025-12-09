@@ -7,7 +7,6 @@ tsconfig.json
 .gitignore
 node_modules/
 coverage/
-PLAN.md
 vitest.config.ts
 .github/
 
