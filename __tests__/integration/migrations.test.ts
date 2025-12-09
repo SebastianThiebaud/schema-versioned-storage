@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { z } from 'zod';
-import { createPersistedState } from '../../src/index';
-import { createMemoryAdapter } from '../../src/adapters/memory';
-import type { Migration } from '../../src/types';
+import { describe, it, expect, beforeEach } from "vitest";
+import { z } from "zod";
+import { createPersistedState } from "../../src/index";
+import { createMemoryAdapter } from "../../src/adapters/memory";
+import type { Migration } from "../../src/types";
 
 // Version 1 schema
 const schemaV1 = z.object({
@@ -27,7 +27,7 @@ const schemaV3 = z.object({
   name: z.string(),
   email: z.string(),
   preferences: z.object({
-    theme: z.enum(['light', 'dark']),
+    theme: z.enum(["light", "dark"]),
   }),
 });
 
@@ -36,25 +36,25 @@ type SchemaV3 = z.infer<typeof schemaV3>;
 function createDefaultsV1(version: number): SchemaV1 {
   return {
     _version: version,
-    name: '',
+    name: "",
   };
 }
 
 function createDefaultsV2(version: number): SchemaV2 {
   return {
     _version: version,
-    name: '',
-    email: '',
+    name: "",
+    email: "",
   };
 }
 
 function createDefaultsV3(version: number): SchemaV3 {
   return {
     _version: version,
-    name: '',
-    email: '',
+    name: "",
+    email: "",
     preferences: {
-      theme: 'light',
+      theme: "light",
     },
   };
 }
@@ -63,14 +63,14 @@ function createDefaultsV3(version: number): SchemaV3 {
 const migrationV1ToV2: Migration<SchemaV2> = {
   metadata: {
     version: 2,
-    description: 'Add email field',
+    description: "Add email field",
   },
   migrate: (state: unknown): SchemaV2 => {
     const oldState = state as SchemaV1;
     return {
       ...oldState,
       _version: 2,
-      email: '',
+      email: "",
     };
   },
 };
@@ -79,7 +79,7 @@ const migrationV1ToV2: Migration<SchemaV2> = {
 const migrationV2ToV3: Migration<SchemaV3> = {
   metadata: {
     version: 3,
-    description: 'Add preferences',
+    description: "Add preferences",
   },
   migrate: (state: unknown): SchemaV3 => {
     const oldState = state as SchemaV2;
@@ -87,94 +87,103 @@ const migrationV2ToV3: Migration<SchemaV3> = {
       ...oldState,
       _version: 3,
       preferences: {
-        theme: 'light',
+        theme: "light",
       },
     };
   },
 };
 
-describe('Integration: Migrations', () => {
-  it('should migrate from v1 to v2', async () => {
+describe("Integration: Migrations", () => {
+  it("should migrate from v1 to v2", async () => {
     const adapter = createMemoryAdapter();
-    
+
     // Store v1 data
-    await adapter.setItem('test-storage', JSON.stringify({
-      _version: 1,
-      name: 'John Doe',
-    }));
+    await adapter.setItem(
+      "test-storage",
+      JSON.stringify({
+        _version: 1,
+        name: "John Doe",
+      }),
+    );
 
     const storage = createPersistedState({
       schema: schemaV2,
       defaults: createDefaultsV2,
-      storageKey: 'test-storage',
+      storageKey: "test-storage",
       storage: adapter,
       migrations: [migrationV1ToV2],
       getCurrentVersion: () => 2,
-      schemaHashes: { 2: 'hash-v2' },
+      schemaHashes: { 2: "hash-v2" },
     });
 
     await storage.init();
-    
+
     const state = storage.getAll();
     expect(state._version).toBe(2);
-    expect(state.name).toBe('John Doe');
-    expect(state.email).toBe('');
+    expect(state.name).toBe("John Doe");
+    expect(state.email).toBe("");
   });
 
-  it('should migrate from v1 to v3 (chained migrations)', async () => {
+  it("should migrate from v1 to v3 (chained migrations)", async () => {
     const adapter = createMemoryAdapter();
-    
+
     // Store v1 data
-    await adapter.setItem('test-storage', JSON.stringify({
-      _version: 1,
-      name: 'John Doe',
-    }));
+    await adapter.setItem(
+      "test-storage",
+      JSON.stringify({
+        _version: 1,
+        name: "John Doe",
+      }),
+    );
 
     const storage = createPersistedState({
       schema: schemaV3,
       defaults: createDefaultsV3,
-      storageKey: 'test-storage',
+      storageKey: "test-storage",
       storage: adapter,
       migrations: [migrationV1ToV2, migrationV2ToV3],
       getCurrentVersion: () => 3,
-      schemaHashes: { 3: 'hash-v3' },
+      schemaHashes: { 3: "hash-v3" },
     });
 
     await storage.init();
-    
+
     const state = storage.getAll();
     expect(state._version).toBe(3);
-    expect(state.name).toBe('John Doe');
-    expect(state.email).toBe('');
-    expect(state.preferences.theme).toBe('light');
+    expect(state.name).toBe("John Doe");
+    expect(state.email).toBe("");
+    expect(state.preferences.theme).toBe("light");
   });
 
-  it('should preserve data during migration', async () => {
+  it("should preserve data during migration", async () => {
     const adapter = createMemoryAdapter();
-    
+
     // Store v2 data with email
-    await adapter.setItem('test-storage', JSON.stringify({
-      _version: 2,
-      name: 'John Doe',
-      email: 'john@example.com',
-    }));
+    await adapter.setItem(
+      "test-storage",
+      JSON.stringify({
+        _version: 2,
+        name: "John Doe",
+        email: "john@example.com",
+      }),
+    );
 
     const storage = createPersistedState({
       schema: schemaV3,
       defaults: createDefaultsV3,
-      storageKey: 'test-storage',
+      storageKey: "test-storage",
       storage: adapter,
       migrations: [migrationV2ToV3],
       getCurrentVersion: () => 3,
-      schemaHashes: { 3: 'hash-v3' },
+      schemaHashes: { 3: "hash-v3" },
     });
 
     await storage.init();
-    
+
     const state = storage.getAll();
     expect(state._version).toBe(3);
-    expect(state.name).toBe('John Doe');
-    expect(state.email).toBe('john@example.com'); // Preserved!
-    expect(state.preferences.theme).toBe('light');
+    expect(state.name).toBe("John Doe");
+    expect(state.email).toBe("john@example.com"); // Preserved!
+    expect(state.preferences.theme).toBe("light");
   });
 });

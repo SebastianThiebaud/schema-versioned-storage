@@ -1,3 +1,2 @@
-export { simpleHash } from './hash';
-export { extractSchemaShape, getTypeString, hashSchema } from './schema-shape';
-
+export { simpleHash } from "./hash";
+export { extractSchemaShape, getTypeString, hashSchema } from "./schema-shape";

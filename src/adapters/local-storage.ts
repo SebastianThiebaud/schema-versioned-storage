@@ -1,11 +1,11 @@
-import type { StorageAdapter } from '../core/persisted';
+import type { StorageAdapter } from "../core/persisted";
 
 /**
  * Create a localStorage adapter for web browsers
  */
 export function createLocalStorageAdapter(): StorageAdapter {
-  if (typeof window === 'undefined' || !window.localStorage) {
-    throw new Error('localStorage is not available in this environment');
+  if (typeof window === "undefined" || !window.localStorage) {
+    throw new Error("localStorage is not available in this environment");
   }
 
   return {
@@ -32,4 +32,3 @@ export function createLocalStorageAdapter(): StorageAdapter {
     },
   };
 }
-

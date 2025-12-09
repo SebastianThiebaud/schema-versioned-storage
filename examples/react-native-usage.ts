@@ -1,19 +1,19 @@
 /**
  * React Native usage example for schema-versioned-storage
- * 
+ *
  * This example shows how to use the package in a React Native app
  * with AsyncStorage adapter.
  */
 
-import { z } from 'zod';
-import { createPersistedState } from '../src/index';
-import { createAsyncStorageAdapter } from '../src/adapters/async-storage';
+import { z } from "zod";
+import { createPersistedState } from "../src/index";
+import { createAsyncStorageAdapter } from "../src/adapters/async-storage";
 
 // 1. Define your schema
 export const persistedSchema = z.object({
   _version: z.number(),
   preferences: z.object({
-    colorScheme: z.enum(['system', 'light', 'dark']).default('system'),
+    colorScheme: z.enum(["system", "light", "dark"]).default("system"),
     notifications: z.boolean().default(true),
   }),
   auth: z.object({
@@ -29,7 +29,7 @@ export function createDefaults(version: number): PersistedSchema {
   return {
     _version: version,
     preferences: {
-      colorScheme: 'system',
+      colorScheme: "system",
       notifications: true,
     },
     auth: {
@@ -47,14 +47,14 @@ const getCurrentSchemaVersion = () => 1;
 // 4. Schema hashes (normally auto-generated)
 // import { SCHEMA_HASHES_BY_VERSION } from './schema-hashes';
 const SCHEMA_HASHES_BY_VERSION: Record<number, string> = {
-  1: 'example-hash-1',
+  1: "example-hash-1",
 };
 
 // 5. Initialize storage
 const storage = createPersistedState({
   schema: persistedSchema,
   defaults: createDefaults,
-  storageKey: 'MY_APP_STATE',
+  storageKey: "MY_APP_STATE",
   storage: createAsyncStorageAdapter(), // Use AsyncStorage for React Native
   migrations,
   getCurrentVersion: getCurrentSchemaVersion,
@@ -99,4 +99,3 @@ function MyComponent() {
   );
 }
 */
-

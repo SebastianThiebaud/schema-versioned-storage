@@ -1,4 +1,4 @@
-import type { Migration } from '../types';
+import type { Migration } from "../types";
 
 /**
  * Run migrations from one version to another
@@ -7,7 +7,7 @@ export function runMigrations<TSchema>(
   state: unknown,
   fromVersion: number,
   toVersion: number,
-  migrations: Migration<TSchema>[]
+  migrations: Migration<TSchema>[],
 ): TSchema {
   if (fromVersion === toVersion) {
     return state as TSchema;
@@ -15,18 +15,18 @@ export function runMigrations<TSchema>(
 
   if (fromVersion > toVersion) {
     throw new Error(
-      `Cannot migrate backwards from version ${fromVersion} to ${toVersion}. Migrations only support forward migration.`
+      `Cannot migrate backwards from version ${fromVersion} to ${toVersion}. Migrations only support forward migration.`,
     );
   }
 
   // Sort migrations by version
   const sortedMigrations = [...migrations].sort(
-    (a, b) => a.metadata.version - b.metadata.version
+    (a, b) => a.metadata.version - b.metadata.version,
   );
 
   // Filter migrations that need to run
   const migrationsToRun = sortedMigrations.filter(
-    (m) => m.metadata.version > fromVersion && m.metadata.version <= toVersion
+    (m) => m.metadata.version > fromVersion && m.metadata.version <= toVersion,
   );
 
   // Verify we have all required migrations
@@ -35,12 +35,16 @@ export function runMigrations<TSchema>(
     expectedVersions.add(v);
   }
 
-  const providedVersions = new Set(migrationsToRun.map((m) => m.metadata.version));
-  const missingVersions = Array.from(expectedVersions).filter((v) => !providedVersions.has(v));
+  const providedVersions = new Set(
+    migrationsToRun.map((m) => m.metadata.version),
+  );
+  const missingVersions = Array.from(expectedVersions).filter(
+    (v) => !providedVersions.has(v),
+  );
 
   if (missingVersions.length > 0) {
     throw new Error(
-      `Missing migrations for versions: ${missingVersions.join(', ')}. Cannot migrate from ${fromVersion} to ${toVersion}.`
+      `Missing migrations for versions: ${missingVersions.join(", ")}. Cannot migrate from ${fromVersion} to ${toVersion}.`,
     );
   }
 
@@ -51,7 +55,7 @@ export function runMigrations<TSchema>(
       currentState = migration.migrate(currentState);
     } catch (error) {
       throw new Error(
-        `Migration ${migration.metadata.version} (${migration.metadata.description}) failed: ${error instanceof Error ? error.message : String(error)}`
+        `Migration ${migration.metadata.version} (${migration.metadata.description}) failed: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }
@@ -62,7 +66,9 @@ export function runMigrations<TSchema>(
 /**
  * Create a migration registry (helper for organizing migrations)
  */
-export function createMigrationRegistry<TSchema>(): Map<number, Migration<TSchema>> {
+export function createMigrationRegistry<TSchema>(): Map<
+  number,
+  Migration<TSchema>
+> {
   return new Map();
 }
-

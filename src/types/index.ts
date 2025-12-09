@@ -13,4 +13,3 @@ export interface Migration<TSchema = any> {
   metadata: MigrationMetadata;
   migrate: (state: unknown) => TSchema;
 }
-

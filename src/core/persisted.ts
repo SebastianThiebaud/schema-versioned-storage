@@ -1,6 +1,6 @@
-import { z } from 'zod';
-import type { Migration } from '../types';
-import { runMigrations } from './migrations';
+import { z } from "zod";
+import type { Migration } from "../types";
+import { runMigrations } from "./migrations";
 
 /**
  * Storage adapter interface for abstracting storage operations
@@ -33,7 +33,7 @@ export interface PersistedState<TSchema> {
   set<K extends keyof TSchema>(key: K, value: TSchema[K]): Promise<void>;
   update<K extends keyof TSchema>(
     key: K,
-    updater: (prev: TSchema[K]) => TSchema[K]
+    updater: (prev: TSchema[K]) => TSchema[K],
   ): Promise<void>;
   getAll(): TSchema;
   clear(): Promise<void>;
@@ -46,7 +46,7 @@ export interface PersistedState<TSchema> {
  * Create a persisted state instance
  */
 export function createPersistedState<TSchema>(
-  config: PersistedStateConfig<TSchema>
+  config: PersistedStateConfig<TSchema>,
 ): PersistedState<TSchema> {
   const {
     schema,
@@ -81,7 +81,12 @@ export function createPersistedState<TSchema>(
           // Check if we need to migrate
           if (storedVersion < currentVersion) {
             // Run migrations
-            state = runMigrations(parsed, storedVersion, currentVersion, migrations);
+            state = runMigrations(
+              parsed,
+              storedVersion,
+              currentVersion,
+              migrations,
+            );
           } else if (storedVersion === currentVersion) {
             // Validate schema hash if available
             const expectedHash = schemaHashes[currentVersion];
@@ -113,7 +118,7 @@ export function createPersistedState<TSchema>(
     }
 
     // Ensure state has _version
-    if (state && typeof state === 'object' && '_version' in state) {
+    if (state && typeof state === "object" && "_version" in state) {
       (state as any)._version = currentVersion;
     }
 
@@ -125,7 +130,7 @@ export function createPersistedState<TSchema>(
    */
   function get<K extends keyof TSchema>(key: K): TSchema[K] {
     if (!initialized || !state) {
-      throw new Error('PersistedState not initialized. Call init() first.');
+      throw new Error("PersistedState not initialized. Call init() first.");
     }
     return state[key];
   }
@@ -133,9 +138,12 @@ export function createPersistedState<TSchema>(
   /**
    * Set a value in the state
    */
-  async function set<K extends keyof TSchema>(key: K, value: TSchema[K]): Promise<void> {
+  async function set<K extends keyof TSchema>(
+    key: K,
+    value: TSchema[K],
+  ): Promise<void> {
     if (!initialized || !state) {
-      throw new Error('PersistedState not initialized. Call init() first.');
+      throw new Error("PersistedState not initialized. Call init() first.");
     }
 
     (state as any)[key] = value;
@@ -157,10 +165,10 @@ export function createPersistedState<TSchema>(
    */
   async function update<K extends keyof TSchema>(
     key: K,
-    updater: (prev: TSchema[K]) => TSchema[K]
+    updater: (prev: TSchema[K]) => TSchema[K],
   ): Promise<void> {
     if (!initialized || !state) {
-      throw new Error('PersistedState not initialized. Call init() first.');
+      throw new Error("PersistedState not initialized. Call init() first.");
     }
 
     const currentValue = state[key];
@@ -173,7 +181,7 @@ export function createPersistedState<TSchema>(
    */
   function getAll(): TSchema {
     if (!initialized || !state) {
-      throw new Error('PersistedState not initialized. Call init() first.');
+      throw new Error("PersistedState not initialized. Call init() first.");
     }
     return state;
   }
@@ -201,7 +209,7 @@ export function createPersistedState<TSchema>(
    * Get the schema hash for the current version
    */
   function getSchemaHash(): string {
-    return schemaHashes[currentVersion] ?? '';
+    return schemaHashes[currentVersion] ?? "";
   }
 
   /**
@@ -223,4 +231,3 @@ export function createPersistedState<TSchema>(
     getSchemaHashForVersion,
   };
 }
-

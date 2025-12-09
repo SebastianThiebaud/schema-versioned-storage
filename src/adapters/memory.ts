@@ -1,4 +1,4 @@
-import type { StorageAdapter } from '../core/persisted';
+import type { StorageAdapter } from "../core/persisted";
 
 /**
  * Create a memory storage adapter (useful for testing)
@@ -18,4 +18,3 @@ export function createMemoryAdapter(): StorageAdapter {
     },
   };
 }
-

@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.1] - 2024-12-09
+### Added
+- CLI tool (`svs`) for running generation scripts
+  - `svs generate:migrations` - Generate migrations index
+  - `svs generate:schema-hashes` - Generate schema hashes
+  - `svs generate:all` - Generate both
+  - Automatically installed when package is installed
+
+## [0.1.1] - 2025-12-09
 
 ### Fixed
 - AsyncStorage adapter now supports both v1.x and v2.x of `@react-native-async-storage/async-storage`

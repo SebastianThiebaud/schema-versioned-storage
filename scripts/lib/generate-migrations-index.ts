@@ -1,12 +1,12 @@
-import { readdir, readFile, writeFile, mkdir } from 'fs/promises';
-import { readFileSync } from 'fs';
-import { dirname, resolve } from 'path';
+import { readdir, readFile, writeFile, mkdir } from "fs/promises";
+import { readFileSync } from "fs";
+import { dirname, resolve } from "path";
 
 // Default configuration
 export const defaultConfig = {
-  migrationsDir: './src/migrations',
-  indexPath: './src/migrations/index.ts',
-  typesPath: 'schema-versioned-storage', // Use package name by default
+  migrationsDir: "./src/migrations",
+  indexPath: "./src/migrations/index.ts",
+  typesPath: "schema-versioned-storage", // Use package name by default
 };
 
 export interface MigrationsConfig {
@@ -18,11 +18,13 @@ export interface MigrationsConfig {
 /**
  * Load configuration from package.json
  */
-export function loadPackageJsonConfig(cwd: string = process.cwd()): Partial<MigrationsConfig> | null {
+export function loadPackageJsonConfig(
+  cwd: string = process.cwd(),
+): Partial<MigrationsConfig> | null {
   try {
-    const packageJsonPath = resolve(cwd, 'package.json');
-    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
-    
+    const packageJsonPath = resolve(cwd, "package.json");
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
+
     if (packageJson.schemaVersionedStorage?.migrations) {
       return {
         migrationsDir: packageJson.schemaVersionedStorage.migrations.dir,
@@ -30,7 +32,7 @@ export function loadPackageJsonConfig(cwd: string = process.cwd()): Partial<Migr
         typesPath: packageJson.schemaVersionedStorage.migrations.typesPath,
       };
     }
-    
+
     // Support flat format in package.json
     if (packageJson.schemaVersionedStorage) {
       return {
@@ -48,43 +50,53 @@ export function loadPackageJsonConfig(cwd: string = process.cwd()): Partial<Migr
 /**
  * Parse command line arguments
  */
-export function parseArgs(args: string[] = process.argv.slice(2), cwd: string = process.cwd()): MigrationsConfig {
+export function parseArgs(
+  args: string[] = process.argv.slice(2),
+  cwd: string = process.cwd(),
+): MigrationsConfig {
   // Start with defaults
   let config: MigrationsConfig = { ...defaultConfig };
-  
+
   // Load from package.json if available (lowest priority)
   const packageJsonConfig = loadPackageJsonConfig(cwd);
   if (packageJsonConfig) {
-    if (packageJsonConfig.migrationsDir) config.migrationsDir = packageJsonConfig.migrationsDir;
-    if (packageJsonConfig.indexPath) config.indexPath = packageJsonConfig.indexPath;
-    if (packageJsonConfig.typesPath) config.typesPath = packageJsonConfig.typesPath;
+    if (packageJsonConfig.migrationsDir)
+      config.migrationsDir = packageJsonConfig.migrationsDir;
+    if (packageJsonConfig.indexPath)
+      config.indexPath = packageJsonConfig.indexPath;
+    if (packageJsonConfig.typesPath)
+      config.typesPath = packageJsonConfig.typesPath;
   }
 
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === '--migrations-dir' && args[i + 1]) {
+    if (args[i] === "--migrations-dir" && args[i + 1]) {
       config.migrationsDir = args[i + 1];
       i++;
-    } else if (args[i] === '--index-path' && args[i + 1]) {
+    } else if (args[i] === "--index-path" && args[i + 1]) {
       config.indexPath = args[i + 1];
       i++;
-    } else if (args[i] === '--types-path' && args[i + 1]) {
+    } else if (args[i] === "--types-path" && args[i + 1]) {
       config.typesPath = args[i + 1];
       i++;
-    } else if (args[i] === '--config' && args[i + 1]) {
+    } else if (args[i] === "--config" && args[i + 1]) {
       // Load config from file (overrides package.json)
       try {
-        const configFile = readFileSync(resolve(cwd, args[i + 1]), 'utf-8');
+        const configFile = readFileSync(resolve(cwd, args[i + 1]), "utf-8");
         const fileConfig = JSON.parse(configFile);
-        
+
         // Support both flat and nested config formats
         if (fileConfig.migrations) {
           // Nested format: { migrations: { dir, indexPath, typesPath } }
-          if (fileConfig.migrations.dir) config.migrationsDir = fileConfig.migrations.dir;
-          if (fileConfig.migrations.indexPath) config.indexPath = fileConfig.migrations.indexPath;
-          if (fileConfig.migrations.typesPath) config.typesPath = fileConfig.migrations.typesPath;
+          if (fileConfig.migrations.dir)
+            config.migrationsDir = fileConfig.migrations.dir;
+          if (fileConfig.migrations.indexPath)
+            config.indexPath = fileConfig.migrations.indexPath;
+          if (fileConfig.migrations.typesPath)
+            config.typesPath = fileConfig.migrations.typesPath;
         } else {
           // Flat format: { migrationsDir, indexPath, typesPath }
-          if (fileConfig.migrationsDir) config.migrationsDir = fileConfig.migrationsDir;
+          if (fileConfig.migrationsDir)
+            config.migrationsDir = fileConfig.migrationsDir;
           if (fileConfig.indexPath) config.indexPath = fileConfig.indexPath;
           if (fileConfig.typesPath) config.typesPath = fileConfig.typesPath;
         }
@@ -101,18 +113,20 @@ export function parseArgs(args: string[] = process.argv.slice(2), cwd: string = 
 /**
  * Find all migration files in the migrations directory
  */
-export async function findMigrationFiles(migrationsDir: string): Promise<string[]> {
+export async function findMigrationFiles(
+  migrationsDir: string,
+): Promise<string[]> {
   try {
     const files = await readdir(migrationsDir);
     return files
       .filter((file) => /^\d+-.*\.ts$/.test(file))
       .sort((a, b) => {
-        const aVersion = parseInt(a.split('-')[0], 10);
-        const bVersion = parseInt(b.split('-')[0], 10);
+        const aVersion = parseInt(a.split("-")[0], 10);
+        const bVersion = parseInt(b.split("-")[0], 10);
         return aVersion - bVersion;
       });
   } catch (error: any) {
-    if (error.code === 'ENOENT') {
+    if (error.code === "ENOENT") {
       return [];
     }
     throw error;
@@ -122,31 +136,34 @@ export async function findMigrationFiles(migrationsDir: string): Promise<string[
 /**
  * Generate the index file content
  */
-export function generateIndexContent(migrationFiles: string[], config: MigrationsConfig): string {
+export function generateIndexContent(
+  migrationFiles: string[],
+  config: MigrationsConfig,
+): string {
   const imports = migrationFiles.map((file, index) => {
-    const fileName = file.replace(/\.ts$/, '');
+    const fileName = file.replace(/\.ts$/, "");
     return `import migration${index} from './${fileName}';`;
   });
 
   const registryEntries = migrationFiles.map((file, index) => {
-    const version = parseInt(file.split('-')[0], 10);
+    const version = parseInt(file.split("-")[0], 10);
     return `  registry.set(${version}, migration${index});`;
   });
 
   // Use the package name for types import
   // Consumers can override this if they have their own types
-  const typesPath = config.typesPath || 'schema-versioned-storage';
+  const typesPath = config.typesPath || "schema-versioned-storage";
 
   return `// Auto-generated file - do not edit manually
 // Run: npm run generate:migrations
 
-${imports.join('\n')}
+${imports.join("\n")}
 
 import type { Migration } from '${typesPath}';
 
 const registry = new Map<number, Migration>();
 
-${registryEntries.join('\n')}
+${registryEntries.join("\n")}
 
 export function getMigrations(): Map<number, Migration> {
   return registry;
@@ -164,7 +181,7 @@ export function getCurrentSchemaVersion(): number {
  */
 export async function generateMigrationsIndex(
   config?: MigrationsConfig,
-  cwd: string = process.cwd()
+  cwd: string = process.cwd(),
 ): Promise<void> {
   const finalConfig = config || parseArgs([], cwd);
   const migrationsDir = resolve(cwd, finalConfig.migrationsDir);
@@ -178,6 +195,5 @@ export async function generateMigrationsIndex(
   await mkdir(dirname(indexPath), { recursive: true });
 
   // Write index file
-  await writeFile(indexPath, content, 'utf-8');
+  await writeFile(indexPath, content, "utf-8");
 }
-

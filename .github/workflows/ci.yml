@@ -61,3 +61,4 @@ jobs:
           test -d dist || (echo "dist directory not found" && exit 1)
           test -f dist/index.js || (echo "dist/index.js not found" && exit 1)
           test -f dist/index.d.ts || (echo "dist/index.d.ts not found" && exit 1)
+

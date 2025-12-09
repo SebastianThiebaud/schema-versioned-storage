@@ -113,19 +113,36 @@ Add configuration to your `package.json` to avoid passing paths every time:
 
 ### 5. Generate migrations index and schema hashes
 
-Run the generation scripts:
+Run the generation scripts using the CLI tool:
 
+```bash
+# Using the CLI (recommended)
+npx svs generate:migrations
+npx svs generate:schema-hashes
+
+# Or generate both at once
+npx svs generate:all
+```
+
+Or add npm scripts to your `package.json`:
+
+```json
+{
+  "scripts": {
+    "generate:migrations": "svs generate:migrations",
+    "generate:schema-hashes": "svs generate:schema-hashes",
+    "generate:all": "svs generate:all"
+  }
+}
+```
+
+Then run:
 ```bash
 npm run generate:migrations
 npm run generate:schema-hashes
 ```
 
-Or if you haven't added npm scripts, run directly:
-
-```bash
-node node_modules/schema-versioned-storage/scripts/generate-migrations-index.mjs
-node node_modules/schema-versioned-storage/scripts/generate-schema-hashes.mjs
-```
+**Note:** The CLI tool (`svs`) is automatically installed with the package. You can use it directly with `npx svs` or add it to your npm scripts.
 
 ### 6. Initialize storage
 
