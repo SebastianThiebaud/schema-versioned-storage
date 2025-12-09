@@ -7,9 +7,22 @@ import type { StorageAdapter } from '../core/persisted';
 export function createAsyncStorageAdapter(): StorageAdapter {
   try {
     // Dynamic import to avoid bundling issues if not using React Native
-    const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+    // Handle both v1.x (default export) and v2.x (default or named export) patterns
+    const asyncStorageModule = require('@react-native-async-storage/async-storage');
+    // Support both default export and direct export patterns
+    const AsyncStorage = asyncStorageModule.default || asyncStorageModule;
+    
     if (!AsyncStorage) {
       throw new Error('AsyncStorage is not available');
+    }
+
+    // Verify it has the required methods
+    if (
+      typeof AsyncStorage.getItem !== 'function' ||
+      typeof AsyncStorage.setItem !== 'function' ||
+      typeof AsyncStorage.removeItem !== 'function'
+    ) {
+      throw new Error('AsyncStorage does not have required methods');
     }
 
     return {
