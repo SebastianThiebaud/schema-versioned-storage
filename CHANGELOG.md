@@ -7,10 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.1] - 2025-12-09
 
+### Changed
+- **Script Consolidation**: Removed duplicate `.mjs` files and consolidated to TypeScript-only implementation
+  - Removed `scripts/generate-migrations-index.mjs` and `scripts/generate-schema-hashes.mjs`
+  - Scripts now run directly from TypeScript files in `scripts/lib/` using `tsx`
+  - Updated `package.json` scripts to use `tsx` instead of `node` for running TypeScript files
+  - Added CLI entry points to TypeScript library files for direct execution
+  - Eliminates code duplication and maintains single source of truth
+
 ### Fixed
 - Removed incorrectly generated migrations index file from library source code
   - The `src/migrations/index.ts` file was auto-generated and should only exist in user projects, not in the library itself
   - This fixes TypeScript compilation errors when building the library
+- Fixed GitHub Actions workflow syntax errors in release.yml
+  - Separated `uses` and `run` steps that were incorrectly combined
+- Fixed timeout issues in schema hashes generation script
+  - Added proper timeout handling with process cleanup for TypeScript schema loading
+  - Prevents hanging processes when schema cannot be loaded
 
 ## [0.2.0] - 2025-12-09
 

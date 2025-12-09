@@ -286,5 +286,28 @@ export async function generateSchemaHashesFile(
   const schemaFile = resolve(cwd, finalConfig.schemaFile);
   const outputPath = resolve(cwd, finalConfig.outputPath);
 
+  console.log(`Reading schema file: ${schemaFile}`);
   await generateSchemaHashes(schemaFile, outputPath, cwd);
+  console.log(`Generated schema hashes file: ${outputPath}`);
+}
+
+// CLI entry point - run when executed directly
+// Check if this file is being run as a script (not imported)
+// When run with tsx, process.argv[1] will be the tsx binary, but the file path will be in argv[2]
+const scriptPath = process.argv[1] || process.argv[2] || "";
+const isMainModule =
+  scriptPath.includes("generate-schema-hashes.ts") ||
+  import.meta.url.endsWith("generate-schema-hashes.ts");
+
+if (isMainModule) {
+  // Parse CLI arguments and pass them to generateSchemaHashesFile
+  const config = parseArgs();
+  generateSchemaHashesFile(config)
+    .then(() => {
+      process.exit(0);
+    })
+    .catch((error) => {
+      console.error("Error generating schema hashes:", error);
+      process.exit(1);
+    });
 }

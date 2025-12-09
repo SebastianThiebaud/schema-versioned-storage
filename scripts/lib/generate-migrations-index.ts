@@ -211,6 +211,13 @@ export async function generateMigrationsIndex(
 
   const migrationFiles = await findMigrationFiles(migrationsDir);
 
+  if (migrationFiles.length === 0) {
+    console.warn("No migration files found. Creating empty index.");
+  } else {
+    console.log(`Found ${migrationFiles.length} migration(s):`);
+    migrationFiles.forEach((file) => console.log(`  - ${file}`));
+  }
+
   const content = generateIndexContent(migrationFiles, finalConfig);
 
   // Ensure directory exists
@@ -218,4 +225,26 @@ export async function generateMigrationsIndex(
 
   // Write index file
   await writeFile(indexPath, content, "utf-8");
+  console.log(`Generated index file: ${indexPath}`);
+}
+
+// CLI entry point - run when executed directly
+// Check if this file is being run as a script (not imported)
+// When run with tsx, process.argv[1] will be the tsx binary, but the file path will be in argv[2]
+const scriptPath = process.argv[1] || process.argv[2] || "";
+const isMainModule =
+  scriptPath.includes("generate-migrations-index.ts") ||
+  import.meta.url.endsWith("generate-migrations-index.ts");
+
+if (isMainModule) {
+  // Parse CLI arguments and pass them to generateMigrationsIndex
+  const config = parseArgs();
+  generateMigrationsIndex(config)
+    .then(() => {
+      process.exit(0);
+    })
+    .catch((error) => {
+      console.error("Error generating migrations index:", error);
+      process.exit(1);
+    });
 }

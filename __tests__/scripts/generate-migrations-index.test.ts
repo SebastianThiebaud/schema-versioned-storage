@@ -7,14 +7,15 @@ import { tmpdir } from "os";
 
 const execAsync = promisify(exec);
 
-describe("generate-migrations-index.mjs", () => {
+describe("generate-migrations-index.ts", () => {
   let tempDir: string;
   let migrationsDir: string;
   let indexPath: string;
   const scriptPath = join(
     process.cwd(),
     "scripts",
-    "generate-migrations-index.mjs",
+    "lib",
+    "generate-migrations-index.ts",
   );
 
   beforeEach(async () => {
@@ -30,7 +31,7 @@ describe("generate-migrations-index.mjs", () => {
 
   it("should generate index file with no migrations", async () => {
     const { stdout, stderr } = await execAsync(
-      `node ${scriptPath} --migrations-dir ${migrationsDir} --index-path ${indexPath}`,
+      `npx tsx ${scriptPath} --migrations-dir ${migrationsDir} --index-path ${indexPath}`,
     );
 
     const indexContent = await readFile(indexPath, "utf-8");
@@ -55,7 +56,7 @@ export default migration;`;
     );
 
     await execAsync(
-      `node ${scriptPath} --migrations-dir ${migrationsDir} --index-path ${indexPath}`,
+      `npx tsx ${scriptPath} --migrations-dir ${migrationsDir} --index-path ${indexPath}`,
     );
 
     const indexContent = await readFile(indexPath, "utf-8");
@@ -99,7 +100,7 @@ export default migration;`,
     );
 
     await execAsync(
-      `node ${scriptPath} --migrations-dir ${migrationsDir} --index-path ${indexPath}`,
+      `npx tsx ${scriptPath} --migrations-dir ${migrationsDir} --index-path ${indexPath}`,
     );
 
     const indexContent = await readFile(indexPath, "utf-8");
@@ -125,7 +126,7 @@ export default migration;`,
 
   it("should use custom types path", async () => {
     await execAsync(
-      `node ${scriptPath} --migrations-dir ${migrationsDir} --index-path ${indexPath} --types-path ./custom-types`,
+      `npx tsx ${scriptPath} --migrations-dir ${migrationsDir} --index-path ${indexPath} --types-path ./custom-types`,
     );
 
     const indexContent = await readFile(indexPath, "utf-8");
@@ -147,7 +148,7 @@ export default migration;`,
       }),
     );
 
-    await execAsync(`node ${scriptPath} --config ${configFile}`);
+    await execAsync(`npx tsx ${scriptPath} --config ${configFile}`);
 
     const indexContent = await readFile(indexPath, "utf-8");
     expect(indexContent).toContain(
@@ -166,7 +167,7 @@ export default migration;`,
       }),
     );
 
-    await execAsync(`node ${scriptPath} --config ${configFile}`);
+    await execAsync(`npx tsx ${scriptPath} --config ${configFile}`);
 
     const indexContent = await readFile(indexPath, "utf-8");
     expect(indexContent).toContain(
@@ -191,7 +192,7 @@ export default migration;`,
     );
 
     // Run script from temp directory using cwd option
-    await execAsync(`node ${scriptPath}`, { cwd: tempDir });
+    await execAsync(`npx tsx ${scriptPath}`, { cwd: tempDir });
 
     const indexContent = await readFile(indexPath, "utf-8");
     expect(indexContent).toContain(
@@ -216,7 +217,7 @@ export default migration;`,
     );
 
     // Run script from temp directory using cwd option
-    await execAsync(`node ${scriptPath} --types-path cli-override-types`, {
+    await execAsync(`npx tsx ${scriptPath} --types-path cli-override-types`, {
       cwd: tempDir,
     });
 
@@ -236,7 +237,7 @@ export default migration;`,
     await writeFile(join(migrationsDir, "README.md"), "# Migrations");
 
     await execAsync(
-      `node ${scriptPath} --migrations-dir ${migrationsDir} --index-path ${indexPath}`,
+      `npx tsx ${scriptPath} --migrations-dir ${migrationsDir} --index-path ${indexPath}`,
     );
 
     const indexContent = await readFile(indexPath, "utf-8");
@@ -248,7 +249,7 @@ export default migration;`,
   it("should create directory if it does not exist", async () => {
     const nestedPath = join(tempDir, "nested", "deep", "index.ts");
     await execAsync(
-      `node ${scriptPath} --migrations-dir ${migrationsDir} --index-path ${nestedPath}`,
+      `npx tsx ${scriptPath} --migrations-dir ${migrationsDir} --index-path ${nestedPath}`,
     );
 
     const indexContent = await readFile(nestedPath, "utf-8");

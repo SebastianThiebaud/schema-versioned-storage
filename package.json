@@ -45,8 +45,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "generate:migrations": "node scripts/generate-migrations-index.mjs",
-    "generate:schema-hashes": "node scripts/generate-schema-hashes.mjs"
+    "generate:migrations": "tsx scripts/lib/generate-migrations-index.ts",
+    "generate:schema-hashes": "tsx scripts/lib/generate-schema-hashes.ts"
   },
   "keywords": [
     "storage",

@@ -7,14 +7,15 @@ import { tmpdir } from "os";
 
 const execAsync = promisify(exec);
 
-describe("generate-schema-hashes.mjs", () => {
+describe("generate-schema-hashes.ts", () => {
   let tempDir: string;
   let schemaFile: string;
   let outputPath: string;
   const scriptPath = join(
     process.cwd(),
     "scripts",
-    "generate-schema-hashes.mjs",
+    "lib",
+    "generate-schema-hashes.ts",
   );
 
   beforeEach(async () => {
@@ -38,7 +39,7 @@ export const persistedSchema = z.object({
     );
 
     const { stdout, stderr } = await execAsync(
-      `node ${scriptPath} --schema-file ${schemaFile} --output-path ${outputPath} 2>&1 || true`,
+      `npx tsx ${scriptPath} --schema-file ${schemaFile} --output-path ${outputPath} 2>&1 || true`,
       { timeout: 15000 }, // 15 seconds - script has 10s timeout + overhead
     );
 
@@ -59,7 +60,7 @@ export const persistedSchema = z.object({
     // Should not throw when given valid arguments
     try {
       await execAsync(
-        `node ${scriptPath} --schema-file ${schemaFile} --output-path ${outputPath} 2>&1 || true`,
+        `npx tsx ${scriptPath} --schema-file ${schemaFile} --output-path ${outputPath} 2>&1 || true`,
         { timeout: 15000 },
       );
       expect(true).toBe(true);
@@ -84,7 +85,7 @@ export const persistedSchema = z.object({
     await writeFile(schemaFile, `export const test = 'schema';`);
 
     try {
-      await execAsync(`node ${scriptPath} --config ${configFile} 2>&1 || true`, {
+      await execAsync(`npx tsx ${scriptPath} --config ${configFile} 2>&1 || true`, {
         timeout: 15000,
       });
     } catch (error) {
@@ -113,7 +114,7 @@ export const persistedSchema = z.object({
     await writeFile(schemaFile, `export const test = 'schema';`);
 
     try {
-      await execAsync(`node ${scriptPath} --config ${configFile} 2>&1 || true`, {
+      await execAsync(`npx tsx ${scriptPath} --config ${configFile} 2>&1 || true`, {
         timeout: 15000,
       });
     } catch (error) {
@@ -148,7 +149,7 @@ export const persistedSchema = z.object({
 
     // Run script from temp directory using cwd option
     try {
-      await execAsync(`node ${scriptPath} 2>&1 || true`, {
+      await execAsync(`npx tsx ${scriptPath} 2>&1 || true`, {
         cwd: tempDir,
         timeout: 15000,
       });
@@ -182,7 +183,7 @@ export const persistedSchema = z.object({
 
     // Run script from temp directory using cwd option
     try {
-      await execAsync(`node ${scriptPath} 2>&1 || true`, {
+      await execAsync(`npx tsx ${scriptPath} 2>&1 || true`, {
         cwd: tempDir,
         timeout: 15000,
       });
@@ -220,7 +221,7 @@ export const persistedSchema = z.object({
     // Run script from temp directory using cwd option
     try {
       await execAsync(
-        `node ${scriptPath} --output-path ${customOutput} 2>&1 || true`,
+        `npx tsx ${scriptPath} --output-path ${customOutput} 2>&1 || true`,
         { cwd: tempDir, timeout: 15000 },
       );
     } catch (error) {
@@ -242,7 +243,7 @@ export const persistedSchema = z.object({
 
     try {
       await execAsync(
-        `node ${scriptPath} --schema-file ${schemaFile} --output-path ${nestedOutput} 2>&1 || true`,
+        `npx tsx ${scriptPath} --schema-file ${schemaFile} --output-path ${nestedOutput} 2>&1 || true`,
         { timeout: 15000 },
       );
     } catch (error) {
