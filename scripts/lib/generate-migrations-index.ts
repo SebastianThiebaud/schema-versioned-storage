@@ -15,11 +15,19 @@ function getPackageName(cwd: string = process.cwd()): string {
   }
 }
 
-// Default configuration
-export function getDefaultConfig(cwd: string = process.cwd()) {
+// Default configuration (for backward compatibility with tests)
+// Note: When actually used, parseArgs will use getDefaultConfig() which reads the package name
+export const defaultConfig = {
+  migrationsDir: "./src/migrations",
+  indexPath: "./src/migrations/index.ts",
+  typesPath: "schema-versioned-storage", // Fallback default
+};
+
+// Get default config with actual package name from package.json
+function getDefaultConfig(cwd: string = process.cwd()) {
   return {
-    migrationsDir: "./src/migrations",
-    indexPath: "./src/migrations/index.ts",
+    migrationsDir: defaultConfig.migrationsDir,
+    indexPath: defaultConfig.indexPath,
     typesPath: getPackageName(cwd), // Use package name by default
   };
 }
@@ -165,8 +173,8 @@ export function generateIndexContent(
     return `  registry.set(${version}, migration${index});`;
   });
 
-  // Use the configured typesPath (which defaults to package name)
-  const typesPath = config.typesPath;
+  // Use the configured typesPath with fallback to default
+  const typesPath = config?.typesPath || defaultConfig.typesPath;
 
   return `// Auto-generated file - do not edit manually
 // Run: npm run generate:migrations

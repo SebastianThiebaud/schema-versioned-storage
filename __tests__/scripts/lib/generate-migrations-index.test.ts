@@ -25,7 +25,10 @@ describe("generate-migrations-index", () => {
   describe("parseArgs", () => {
     it("should return default config when no args", () => {
       const config = parseArgs([]);
-      expect(config).toEqual(defaultConfig);
+      // typesPath will be the actual package name from package.json
+      expect(config.migrationsDir).toBe(defaultConfig.migrationsDir);
+      expect(config.indexPath).toBe(defaultConfig.indexPath);
+      expect(config.typesPath).toBeTruthy(); // Should have a typesPath (package name)
     });
 
     it("should parse migrations-dir argument", () => {
@@ -98,7 +101,7 @@ describe("generate-migrations-index", () => {
       const config = parseArgs([], tempDir);
       expect(config.migrationsDir).toBe("./partial/migrations");
       expect(config.indexPath).toBe(defaultConfig.indexPath); // Uses default
-      expect(config.typesPath).toBe(defaultConfig.typesPath); // Uses default
+      expect(config.typesPath).toBe("test-app"); // Uses package name from package.json
     });
 
     it("should load from config file with nested format", async () => {
