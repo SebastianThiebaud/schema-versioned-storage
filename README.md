@@ -732,7 +732,7 @@ await storage.set('preferences', { invalid: 'value' }); // ❌ TypeScript error
 
 ## Releasing
 
-This package uses GitHub Actions to automatically publish to GitHub Packages when a new release is created on GitHub.
+This package uses GitHub Actions to automatically publish to both npmjs.org and GitHub Packages when a new release is created on GitHub.
 
 ### Release Process
 
@@ -750,6 +750,7 @@ The GitHub Action will automatically:
 - Verify the version in `package.json` matches the release tag
 - Run tests
 - Build the package
+- Publish to npmjs.org
 - Publish to GitHub Packages
 
 ## License

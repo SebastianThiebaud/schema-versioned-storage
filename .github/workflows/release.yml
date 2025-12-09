@@ -1,4 +1,4 @@
-name: Release to npm
+name: Release
 
 on:
   release:
@@ -16,13 +16,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@sebastianthiebaud'
 
       - name: Extract version from tag
         id: version
@@ -52,14 +45,22 @@ jobs:
       - name: Build package
         run: npm run build
 
-      - name: Verify package configuration
-        run: |
-          echo "Package name: $(node -p "require('./package.json').name")"
-          echo "Registry from publishConfig: $(node -p "require('./package.json').publishConfig?.registry || 'not set'")"
-          echo "Checking .npmrc..."
-          cat .npmrc || echo ".npmrc not found (will be created by setup-node)"
+      - name: Publish to npmjs.org
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        continue-on-error: true
 
       - name: Publish to GitHub Packages
-        run: npm publish --registry=https://npm.pkg.github.com
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@sebastianthiebaud'
+        run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
