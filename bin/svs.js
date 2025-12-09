@@ -12,6 +12,8 @@
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { spawn } from "child_process";
+import { existsSync } from "fs";
+import { execSync } from "child_process";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -19,20 +21,36 @@ const __dirname = dirname(__filename);
 const commands = {
   "generate:migrations": join(
     __dirname,
-    "../scripts/generate-migrations-index.mjs",
+    "../scripts/lib/generate-migrations-index.ts",
   ),
   "generate:schema-hashes": join(
     __dirname,
-    "../scripts/generate-schema-hashes.mjs",
+    "../scripts/lib/generate-schema-hashes.ts",
   ),
   "generate:all": null, // Special case - runs both
 };
 
 function runScript(scriptPath, args = []) {
+  // Use tsx to run TypeScript files
+  // Try local tsx first, then npx
+  const localTsx = join(process.cwd(), "node_modules", ".bin", "tsx");
+  let tsxCommand = "npx --yes tsx";
+  
+  if (existsSync(localTsx)) {
+    tsxCommand = localTsx;
+  } else {
+    try {
+      execSync("tsx --version", { stdio: "ignore" });
+      tsxCommand = "tsx";
+    } catch {
+      // Use npx
+    }
+  }
+  
   return new Promise((resolve, reject) => {
-    const child = spawn("node", [scriptPath, ...args], {
+    const child = spawn(tsxCommand, [scriptPath, ...args], {
       stdio: "inherit",
-      shell: false,
+      shell: true,
     });
 
     child.on("close", (code) => {
