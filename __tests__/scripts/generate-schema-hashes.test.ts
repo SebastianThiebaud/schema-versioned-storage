@@ -39,6 +39,7 @@ export const persistedSchema = z.object({
 
     const { stdout, stderr } = await execAsync(
       `node ${scriptPath} --schema-file ${schemaFile} --output-path ${outputPath} 2>&1 || true`,
+      { timeout: 15000 }, // 15 seconds - script has 10s timeout + overhead
     );
 
     // The script should generate a file (either with hash or template)
@@ -59,6 +60,7 @@ export const persistedSchema = z.object({
     try {
       await execAsync(
         `node ${scriptPath} --schema-file ${schemaFile} --output-path ${outputPath} 2>&1 || true`,
+        { timeout: 15000 },
       );
       expect(true).toBe(true);
     } catch (error: any) {
@@ -82,7 +84,9 @@ export const persistedSchema = z.object({
     await writeFile(schemaFile, `export const test = 'schema';`);
 
     try {
-      await execAsync(`node ${scriptPath} --config ${configFile} 2>&1 || true`);
+      await execAsync(`node ${scriptPath} --config ${configFile} 2>&1 || true`, {
+        timeout: 15000,
+      });
     } catch (error) {
       // May fail due to schema loading, but should parse config
     }
@@ -109,7 +113,9 @@ export const persistedSchema = z.object({
     await writeFile(schemaFile, `export const test = 'schema';`);
 
     try {
-      await execAsync(`node ${scriptPath} --config ${configFile} 2>&1 || true`);
+      await execAsync(`node ${scriptPath} --config ${configFile} 2>&1 || true`, {
+        timeout: 15000,
+      });
     } catch (error) {
       // May fail due to schema loading, but should parse config
     }
@@ -142,7 +148,10 @@ export const persistedSchema = z.object({
 
     // Run script from temp directory using cwd option
     try {
-      await execAsync(`node ${scriptPath} 2>&1 || true`, { cwd: tempDir });
+      await execAsync(`node ${scriptPath} 2>&1 || true`, {
+        cwd: tempDir,
+        timeout: 15000,
+      });
     } catch (error) {
       // May fail due to schema loading
     }
@@ -173,7 +182,10 @@ export const persistedSchema = z.object({
 
     // Run script from temp directory using cwd option
     try {
-      await execAsync(`node ${scriptPath} 2>&1 || true`, { cwd: tempDir });
+      await execAsync(`node ${scriptPath} 2>&1 || true`, {
+        cwd: tempDir,
+        timeout: 15000,
+      });
     } catch (error) {
       // May fail due to schema loading
     }
@@ -209,7 +221,7 @@ export const persistedSchema = z.object({
     try {
       await execAsync(
         `node ${scriptPath} --output-path ${customOutput} 2>&1 || true`,
-        { cwd: tempDir },
+        { cwd: tempDir, timeout: 15000 },
       );
     } catch (error) {
       // May fail due to schema loading
@@ -231,6 +243,7 @@ export const persistedSchema = z.object({
     try {
       await execAsync(
         `node ${scriptPath} --schema-file ${schemaFile} --output-path ${nestedOutput} 2>&1 || true`,
+        { timeout: 15000 },
       );
     } catch (error) {
       // May fail due to schema loading

@@ -270,13 +270,56 @@ async function generateSchemaHashes(schemaFile, outputPath) {
         const inlineScript = `import { persistedSchema } from '${importPath}'; import { hashSchema } from '${packageName}'; console.log(JSON.stringify({ hash: hashSchema(persistedSchema) }));`;
         
         try {
-          const result = execSync(`${tsxCommand} -e "${inlineScript.replace(/"/g, '\\"')}"`, {
-            encoding: 'utf-8',
-            cwd: process.cwd(),
-            stdio: ['ignore', 'pipe', 'pipe'],
+          // Use exec with timeout wrapper
+          const { exec } = require('child_process');
+          const timeout = 10000; // 10 seconds
+          
+          // Escape the inline script for shell - use double quotes and escape internal quotes
+          const escapedScript = inlineScript.replace(/"/g, '\\"');
+          // Use shell to handle complex commands like 'npx --yes tsx'
+          const fullCommand = `${tsxCommand} -e "${escapedScript}"`;
+          
+          // Wrap exec in a promise with timeout
+          const output = await new Promise((resolve, reject) => {
+            let timeoutId;
+            let childProcess;
+            
+            const cleanup = () => {
+              if (timeoutId) clearTimeout(timeoutId);
+              if (childProcess) {
+                try {
+                  childProcess.kill();
+                } catch (e) {
+                  // Ignore kill errors
+                }
+              }
+            };
+            
+            // Set up timeout
+            timeoutId = setTimeout(() => {
+              cleanup();
+              reject(new Error('Execution timeout'));
+            }, timeout);
+            
+            // Execute command
+            childProcess = exec(
+              fullCommand,
+              {
+                cwd: process.cwd(),
+                encoding: 'utf-8',
+                maxBuffer: 10 * 1024 * 1024, // 10MB
+              },
+              (error, stdout, stderr) => {
+                cleanup();
+                if (error) {
+                  reject(error);
+                } else {
+                  resolve(stdout.trim());
+                }
+              }
+            );
           });
           
-          const output = result.trim();
           if (output) {
             const data = JSON.parse(output);
             hash = data.hash;
@@ -291,9 +334,9 @@ async function generateSchemaHashes(schemaFile, outputPath) {
             schemaModule = require(schemaPath);
           } catch (tsNodeError) {
             // Log the error for debugging
-            const errorMsg = execError.stderr ? execError.stderr.toString() : execError.message;
+            const errorMsg = execError.message || String(execError);
             console.warn('Could not import TypeScript schema using tsx.');
-            if (errorMsg && !errorMsg.includes('tsx')) {
+            if (errorMsg && !errorMsg.includes('tsx') && !errorMsg.includes('timeout')) {
               console.warn('Error:', errorMsg.substring(0, 200));
             }
             console.warn('Please install tsx: npm install --save-dev tsx');
