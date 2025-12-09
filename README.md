@@ -1,4 +1,4 @@
-# schema-versioned-storage
+# @sebastianthiebaud/schema-versioned-storage
 
 Type-safe, versioned persisted state with automatic migrations for TypeScript applications.
 
@@ -7,15 +7,73 @@ Type-safe, versioned persisted state with automatic migrations for TypeScript ap
 - 🔒 **Type-safe**: Full TypeScript support with Zod schema validation
 - 🔄 **Automatic migrations**: Seamlessly migrate between schema versions
 - 💾 **Storage agnostic**: Works with AsyncStorage (React Native), localStorage (Web), or custom adapters
-- 🎯 **Zero dependencies**: Only requires Zod (and optional peer dependencies for adapters)
+- 🎯 **Minimal dependencies**: Only requires Zod (automatically installed)
 - 🧪 **Test-friendly**: Includes memory adapter for testing
 - 📦 **Tree-shakeable**: ES modules support
+
+## Why This Package?
+
+### Type-Safe State Management
+
+Get full TypeScript autocomplete and type checking for your persisted state:
+
+```typescript
+// Define your schema once
+const schema = z.object({
+  preferences: z.object({
+    colorScheme: z.enum(['light', 'dark', 'system']),
+    language: z.string(),
+  }),
+});
+
+// TypeScript knows exactly what you can get/set
+const storage = createPersistedState({ schema, /* ... */ });
+
+// ✅ Type-safe getter - autocomplete works!
+const colorScheme = storage.get('preferences').colorScheme;
+
+// ✅ Type-safe setter - TypeScript catches errors
+await storage.set('preferences', { colorScheme: 'dark' }); // ✅
+await storage.set('preferences', { colorScheme: 'invalid' }); // ❌ TypeScript error
+
+// ❌ TypeScript error - 'invalidKey' doesn't exist
+const invalid = storage.get('invalidKey');
+```
+
+### Automatic Migrations
+
+Add new fields or change your schema without breaking existing users:
+
+```typescript
+// Migration file: src/migrations/2-add-language.ts
+import type { Migration } from '@sebastianthiebaud/schema-versioned-storage';
+
+const migration: Migration<PersistedSchema> = {
+  metadata: { version: 2, description: 'Add language preference' },
+  migrate: (oldState) => ({
+    ...oldState,
+    _version: 2,
+    preferences: {
+      ...oldState.preferences,
+      language: 'en', // Default for existing users
+    },
+  }),
+};
+
+export default migration;
+```
+
+The migration runs automatically when users update your app! 🎉
+
+**👉 [See full Quick Start guide](#quick-start) | [Learn about migrations](#migration-system) | [View API reference](#api-reference)**
 
 ## Installation
 
 ```bash
-npm install @sebastianthiebaud/schema-versioned-storage zod
+npm install @sebastianthiebaud/schema-versioned-storage
 ```
+
+Zod will be automatically installed as a dependency.
 
 For React Native, also install:
 
@@ -61,7 +119,7 @@ export function createDefaults(version: number): PersistedSchema {
 
 ```typescript
 // src/migrations/2-add-feature.ts
-import type { Migration } from 'schema-versioned-storage';
+import type { Migration } from '@sebastianthiebaud/schema-versioned-storage';
 import type { PersistedSchema } from '../schema';
 
 const migration: Migration<PersistedSchema> = {
@@ -99,12 +157,13 @@ Add configuration to your `package.json` to avoid passing paths every time:
     "migrations": {
       "dir": "./src/migrations",
       "indexPath": "./src/migrations/index.ts",
-      "typesPath": "schema-versioned-storage"
+      "typesPath": "@sebastianthiebaud/schema-versioned-storage"
     }
   },
   "scripts": {
-    "generate:migrations": "node node_modules/schema-versioned-storage/scripts/generate-migrations-index.mjs",
-    "generate:schema-hashes": "node node_modules/schema-versioned-storage/scripts/generate-schema-hashes.mjs"
+    "generate:migrations": "svs generate:migrations",
+    "generate:schema-hashes": "svs generate:schema-hashes",
+    "generate:all": "svs generate:all"
   }
 }
 ```
@@ -148,8 +207,8 @@ npm run generate:schema-hashes
 
 ```typescript
 // src/storage.ts
-import { createPersistedState } from 'schema-versioned-storage';
-import { createAsyncStorageAdapter } from 'schema-versioned-storage/adapters/async-storage';
+import { createPersistedState } from '@sebastianthiebaud/schema-versioned-storage';
+import { createAsyncStorageAdapter } from '@sebastianthiebaud/schema-versioned-storage/adapters/async-storage';
 import { persistedSchema } from './schema';
 import { createDefaults } from './defaults';
 import { getMigrations, getCurrentSchemaVersion } from './migrations';
@@ -189,6 +248,51 @@ await storage.update('preferences', (prev) => ({
 // Get all state
 const allState = storage.getAll();
 ```
+
+### 7b. Using React Hooks (Optional)
+
+For React applications, you can use the `StorageProvider` and `useStorage` hook to access storage from any component without prop drilling:
+
+```typescript
+// src/App.tsx
+import { StorageProvider, useStorage } from '@sebastianthiebaud/schema-versioned-storage/react';
+import { storage } from './storage'; // Your storage instance
+import { useEffect, useState } from 'react';
+
+function App() {
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    storage.init().then(() => setInitialized(true));
+  }, []);
+
+  if (!initialized) return <div>Loading...</div>;
+
+  return (
+    <StorageProvider storage={storage} initialized={initialized}>
+      <MyComponent />
+    </StorageProvider>
+  );
+}
+
+// Any component can now access storage
+function MyComponent() {
+  const storage = useStorage<PersistedSchema>();
+  
+  const colorScheme = storage.get('preferences').colorScheme;
+  
+  const handleChange = async () => {
+    await storage.set('preferences', {
+      ...storage.get('preferences'),
+      colorScheme: 'dark',
+    });
+  };
+
+  return <button onClick={handleChange}>Toggle Theme</button>;
+}
+```
+
+**Note:** React hooks are optional. If you're not using React, you can use the storage instance directly as shown in step 7.
 
 ## API Reference
 
@@ -246,12 +350,53 @@ Get the schema hash for the current version.
 
 Get the schema hash for a specific version.
 
+### React Hooks (Optional)
+
+#### `StorageProvider<TSchema>(props)`
+
+Provider component that makes the storage instance available to all child components via React Context.
+
+**Props:**
+- `storage`: `PersistedState<TSchema>` - The storage instance
+- `initialized`: `boolean` (optional) - Whether storage has been initialized
+- `children`: `ReactNode` - Child components
+
+**Example:**
+```typescript
+<StorageProvider storage={storage} initialized={true}>
+  <App />
+</StorageProvider>
+```
+
+#### `useStorage<TSchema>(): PersistedState<TSchema>`
+
+Hook to access the storage instance from any component within a `StorageProvider`.
+
+**Returns:** The storage instance
+
+**Throws:** Error if used outside of `StorageProvider`
+
+**Example:**
+```typescript
+function MyComponent() {
+  const storage = useStorage<PersistedSchema>();
+  const value = storage.get('preferences');
+  // ...
+}
+```
+
+#### `useStorageInitialized(): boolean`
+
+Hook to check if storage has been initialized.
+
+**Returns:** `true` if storage is initialized, `false` otherwise
+
 ## Storage Adapters
 
 ### AsyncStorage (React Native)
 
 ```typescript
-import { createAsyncStorageAdapter } from 'schema-versioned-storage/adapters/async-storage';
+import { createAsyncStorageAdapter } from '@sebastianthiebaud/schema-versioned-storage/adapters/async-storage';
 
 const storage = createPersistedState({
   // ... other config
@@ -262,7 +407,7 @@ const storage = createPersistedState({
 ### localStorage (Web)
 
 ```typescript
-import { createLocalStorageAdapter } from 'schema-versioned-storage/adapters/local-storage';
+import { createLocalStorageAdapter } from '@sebastianthiebaud/schema-versioned-storage/adapters/local-storage';
 
 const storage = createPersistedState({
   // ... other config
@@ -273,7 +418,7 @@ const storage = createPersistedState({
 ### Memory (Testing)
 
 ```typescript
-import { createMemoryAdapter } from 'schema-versioned-storage/adapters/memory';
+import { createMemoryAdapter } from '@sebastianthiebaud/schema-versioned-storage/adapters/memory';
 
 const storage = createPersistedState({
   // ... other config
@@ -284,7 +429,7 @@ const storage = createPersistedState({
 ### Custom Adapter
 
 ```typescript
-import type { StorageAdapter } from 'schema-versioned-storage';
+import type { StorageAdapter } from '@sebastianthiebaud/schema-versioned-storage';
 
 const customAdapter: StorageAdapter = {
   async getItem(key: string): Promise<string | null> {
@@ -310,7 +455,7 @@ Migrations are automatically run when the stored version is older than the curre
 Example migration:
 
 ```typescript
-import type { Migration } from 'schema-versioned-storage';
+import type { Migration } from '@sebastianthiebaud/schema-versioned-storage';
 import type { PersistedSchema } from '../schema';
 
 const migration: Migration<PersistedSchema> = {
@@ -360,7 +505,7 @@ Add a `schemaVersionedStorage` field to your `package.json`:
     "migrations": {
       "dir": "./lib/storage/migrations",
       "indexPath": "./lib/storage/migrations/index.ts",
-      "typesPath": "schema-versioned-storage"
+      "typesPath": "my-app"
     }
   }
 }
@@ -376,16 +521,20 @@ Add a `schemaVersionedStorage` field to your `package.json`:
     "outputPath": "./lib/storage/schema-hashes.ts",
     "migrationsDir": "./lib/storage/migrations",
     "indexPath": "./lib/storage/migrations/index.ts",
-    "typesPath": "schema-versioned-storage"
+    "typesPath": "my-app"
   }
 }
 ```
 
-Then run the scripts without any arguments:
+Then run the scripts using the CLI:
 
 ```bash
-node node_modules/schema-versioned-storage/scripts/generate-migrations-index.mjs
-node node_modules/schema-versioned-storage/scripts/generate-schema-hashes.mjs
+# Using npx (recommended)
+npx svs generate:migrations
+npx svs generate:schema-hashes
+
+# Or generate both at once
+npx svs generate:all
 ```
 
 Or add npm scripts to your `package.json`:
@@ -393,8 +542,9 @@ Or add npm scripts to your `package.json`:
 ```json
 {
   "scripts": {
-    "generate:migrations": "node node_modules/schema-versioned-storage/scripts/generate-migrations-index.mjs",
-    "generate:schema-hashes": "node node_modules/schema-versioned-storage/scripts/generate-schema-hashes.mjs"
+    "generate:migrations": "svs generate:migrations",
+    "generate:schema-hashes": "svs generate:schema-hashes",
+    "generate:all": "svs generate:all"
   }
 }
 ```
@@ -412,13 +562,13 @@ Pass paths directly as command-line arguments:
 
 ```bash
 # Generate migrations index
-node node_modules/schema-versioned-storage/scripts/generate-migrations-index.mjs \
+npx svs generate:migrations \
   --migrations-dir ./lib/storage/migrations \
   --index-path ./lib/storage/migrations/index.ts \
-  --types-path schema-versioned-storage
+  --types-path my-app
 
 # Generate schema hashes
-node node_modules/schema-versioned-storage/scripts/generate-schema-hashes.mjs \
+npx svs generate:schema-hashes \
   --schema-file ./lib/storage/schema.ts \
   --output-path ./lib/storage/schema-hashes.ts
 ```
@@ -440,7 +590,7 @@ Create a `schema-versioned-storage.config.json` file in your project root. You c
   "migrations": {
     "dir": "./lib/storage/migrations",
     "indexPath": "./lib/storage/migrations/index.ts",
-    "typesPath": "schema-versioned-storage"
+    "typesPath": "my-app"
   }
 }
 ```
@@ -452,18 +602,15 @@ Create a `schema-versioned-storage.config.json` file in your project root. You c
   "outputPath": "./lib/storage/schema-hashes.ts",
   "migrationsDir": "./lib/storage/migrations",
   "indexPath": "./lib/storage/migrations/index.ts",
-  "typesPath": "schema-versioned-storage"
+  "typesPath": "my-app"
 }
 ```
 
 Then run the scripts with the config file:
 
 ```bash
-node node_modules/schema-versioned-storage/scripts/generate-migrations-index.mjs \
-  --config schema-versioned-storage.config.json
-
-node node_modules/schema-versioned-storage/scripts/generate-schema-hashes.mjs \
-  --config schema-versioned-storage.config.json
+npx svs generate:migrations --config schema-versioned-storage.config.json
+npx svs generate:schema-hashes --config schema-versioned-storage.config.json
 ```
 
 **Note:** The `defaults.file` field in the nested format is for documentation purposes only. The defaults file path is not used by the scripts, but you should keep it in sync with your actual defaults file location.
@@ -478,7 +625,7 @@ If no configuration is provided, the scripts use these defaults:
 - **Schema hashes output**: `./src/schema-hashes.ts`
 - **Migrations directory**: `./src/migrations`
 - **Migrations index**: `./src/migrations/index.ts`
-- **Types path**: `schema-versioned-storage` (package name)
+- **Types path**: Automatically uses your package name from `package.json` (or `schema-versioned-storage` as fallback)
 
 ## Scripts
 
@@ -489,15 +636,15 @@ Generates an index file that exports all migrations. The script scans the migrat
 **CLI Options:**
 - `--migrations-dir <path>` - Directory containing migration files (default: `./src/migrations`)
 - `--index-path <path>` - Output path for the index file (default: `./src/migrations/index.ts`)
-- `--types-path <path>` - Path to import Migration types from (default: `schema-versioned-storage`)
+- `--types-path <path>` - Path to import Migration types from (default: your package name from `package.json`)
 - `--config <file>` - Path to a JSON config file
 
 **Example:**
 ```bash
-node node_modules/schema-versioned-storage/scripts/generate-migrations-index.mjs \
+npx svs generate:migrations \
   --migrations-dir ./lib/storage/migrations \
   --index-path ./lib/storage/migrations/index.ts \
-  --types-path schema-versioned-storage
+  --types-path my-app
 ```
 
 ### Generate Schema Hashes
@@ -511,7 +658,7 @@ Generates a file with schema hashes for each version. These hashes are used to d
 
 **Example:**
 ```bash
-node node_modules/schema-versioned-storage/scripts/generate-schema-hashes.mjs \
+npx svs generate:schema-hashes \
   --schema-file ./lib/storage/schema.ts \
   --output-path ./lib/storage/schema-hashes.ts
 ```
@@ -522,13 +669,14 @@ See the `examples/` directory for complete examples:
 
 - `basic-usage.ts` - Basic usage with memory adapter
 - `react-native-usage.ts` - React Native usage with AsyncStorage
+- `react-hook-usage.tsx` - React hooks with StorageProvider and useStorage
 
 ## Testing
 
 The package includes a memory adapter perfect for testing:
 
 ```typescript
-import { createMemoryAdapter } from 'schema-versioned-storage/adapters/memory';
+import { createMemoryAdapter } from '@sebastianthiebaud/schema-versioned-storage/adapters/memory';
 
 const storage = createPersistedState({
   // ... config
@@ -552,7 +700,7 @@ await storage.set('preferences', { invalid: 'value' }); // ❌ TypeScript error
 
 ## Releasing
 
-This package uses GitHub Actions to automatically publish to npm when a new release is created on GitHub.
+This package uses GitHub Actions to automatically publish to GitHub Packages when a new release is created on GitHub.
 
 ### Release Process
 
@@ -570,7 +718,7 @@ The GitHub Action will automatically:
 - Verify the version in `package.json` matches the release tag
 - Run tests
 - Build the package
-- Publish to npm with provenance
+- Publish to GitHub Packages
 
 ## License
 

@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2025-12-09
+
+### Added
+- **React Hooks Support**: New optional React integration for easier state access
+  - `StorageProvider` component to provide storage instance via React Context
+  - `useStorage<TSchema>()` hook to access storage from any component
+  - `useStorageInitialized()` hook to check initialization status
+  - Available at `@sebastianthiebaud/schema-versioned-storage/react`
+  - React is an optional peer dependency (16.8+)
+  - Full TypeScript support with type safety
+- **GitHub Packages Publishing**: Package now publishes to GitHub Packages
+  - Scoped package name: `@sebastianthiebaud/schema-versioned-storage`
+  - Configured `.npmrc` and `publishConfig` for GitHub Packages
+  - Updated GitHub Actions workflow for GitHub Packages publishing
+- **Enhanced Documentation**:
+  - Added "Why This Package?" section with type-safe examples
+  - React hooks usage guide and examples
+  - Updated all examples to use scoped package name
+  - Improved installation instructions
+
+### Changed
+- **Package Name**: Changed from `schema-versioned-storage` to `@sebastianthiebaud/schema-versioned-storage`
+  - All imports now use scoped package name
+  - Migration generation scripts automatically use package name from `package.json`
+  - Updated all documentation and examples
+- **Installation**: Zod is now automatically installed (no need to install separately)
+  - Updated README to reflect automatic dependency installation
+  - Changed feature description from "Zero dependencies" to "Minimal dependencies"
+- **Script Paths**: All examples now use `svs` CLI tool instead of direct node commands
+  - Cleaner and more maintainable script references
+  - Updated README with `svs` usage throughout
+
+### Fixed
+- TypeScript errors in migration index generation when using scoped package names
+- Package name references in generated migration files now use actual package name from `package.json`
+- Test suite updated to work with scoped package names
+
 ## [0.1.2] - 2025-12-09
 
 ### Added

@@ -6,6 +6,7 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "allowJs": true,
+    "jsx": "react",
     "outDir": "./dist",
     "rootDir": "./src",
     "strict": true,
