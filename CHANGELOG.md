@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2025-12-09
+
+### Changed
+- **Removed Defaults File Requirement**: Defaults can now be defined inline in the schema using Zod's `.default()` method
+  - No longer need to create a separate `defaults.ts` file
+  - Defaults are defined directly in the schema definition for better maintainability
+  - The `defaults` parameter has been removed from `createPersistedState` configuration
+  - Updated all examples, tests, and documentation to use inline defaults
+  - Removed `templates/defaults.ts.example` template file
+  - Removed `defaults` configuration from config templates and examples
+
+### Fixed
+- **Type Inference with Defaults**: Fixed TypeScript type inference to correctly handle Zod schemas with `.default()` values
+  - Changed from `z.infer` to `z.output` to get the correct output type (with defaults applied)
+  - Updated `createPersistedState` to automatically infer output types from schemas
+  - Fields with `.default()` are now correctly typed as required (not optional) after parsing
+  - Fixed type errors in all test files and examples
+- **Migration Type System**: Fixed migration type constraints to allow intermediate migration types
+  - Changed `migrations?: Migration<TSchema>[]` to `migrations?: Migration<any>[]`
+  - Allows migrations to return intermediate schema types (e.g., `SchemaV2` when migrating from v1 to v2)
+  - Final schema validation ensures the result matches the target schema
+  - Fixes type errors when using chained migrations
+
+### Removed
+- `defaults` parameter from `PersistedStateConfig` interface
+- `templates/defaults.ts.example` template file
+- `defaults` configuration fields from config templates
+
 ## [0.2.1] - 2025-12-09
 
 ### Changed
