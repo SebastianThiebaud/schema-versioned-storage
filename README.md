@@ -555,23 +555,6 @@ The GitHub Action will automatically:
 - Build the package
 - Publish to npm with provenance
 
-### Setup
-
-To enable automatic publishing, you need to:
-
-1. Create an npm access token:
-   - Go to [npmjs.com](https://www.npmjs.com/) and log in
-   - Go to Access Tokens → Generate New Token
-   - Choose "Automation" type
-   - Copy the token
-
-2. Add the token as a GitHub secret:
-   - Go to your repository's Settings → Secrets and variables → Actions
-   - Click "New repository secret"
-   - Name: `NPM_TOKEN`
-   - Value: Your npm access token
-   - Click "Add secret"
-
 ## License
 
 MIT

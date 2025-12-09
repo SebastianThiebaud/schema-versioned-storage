@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2024-12-09
+
 ### Fixed
 - AsyncStorage adapter now supports both v1.x and v2.x of `@react-native-async-storage/async-storage`
 - Improved error handling and validation in AsyncStorage adapter to handle different export patterns
