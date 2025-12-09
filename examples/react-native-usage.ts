@@ -9,51 +9,44 @@ import { z } from "zod";
 import { createPersistedState } from "../src/index";
 import { createAsyncStorageAdapter } from "../src/adapters/async-storage";
 
-// 1. Define your schema
+// 1. Define your schema with inline defaults
 export const persistedSchema = z.object({
+  /**
+   * Schema version for migration support
+   * The default value is set at runtime in persisted.ts
+   */
   _version: z.number(),
-  preferences: z.object({
-    colorScheme: z.enum(["system", "light", "dark"]).default("system"),
-    notifications: z.boolean().default(true),
-  }),
-  auth: z.object({
-    token: z.string().optional(),
-    userId: z.string().optional(),
-  }),
+  preferences: z
+    .object({
+      colorScheme: z.enum(["system", "light", "dark"]).default("system"),
+      notifications: z.boolean().default(true),
+    })
+    .default({ colorScheme: "system", notifications: true }),
+  auth: z
+    .object({
+      token: z.string().optional(),
+      userId: z.string().optional(),
+    })
+    .default({})
+    .optional(),
 });
 
 export type PersistedSchema = z.infer<typeof persistedSchema>;
 
-// 2. Define defaults
-export function createDefaults(version: number): PersistedSchema {
-  return {
-    _version: version,
-    preferences: {
-      colorScheme: "system",
-      notifications: true,
-    },
-    auth: {
-      token: undefined,
-      userId: undefined,
-    },
-  };
-}
-
-// 3. Import migrations (if you have any)
+// 2. Import migrations (if you have any)
 // import { getMigrations, getCurrentSchemaVersion } from './migrations';
 const migrations: any[] = [];
 const getCurrentSchemaVersion = () => 1;
 
-// 4. Schema hashes (normally auto-generated)
+// 3. Schema hashes (normally auto-generated)
 // import { SCHEMA_HASHES_BY_VERSION } from './schema-hashes';
 const SCHEMA_HASHES_BY_VERSION: Record<number, string> = {
   1: "example-hash-1",
 };
 
-// 5. Initialize storage
+// 4. Initialize storage
 const storage = createPersistedState({
   schema: persistedSchema,
-  defaults: createDefaults,
   storageKey: "MY_APP_STATE",
   storage: createAsyncStorageAdapter(), // Use AsyncStorage for React Native
   migrations,
@@ -61,7 +54,7 @@ const storage = createPersistedState({
   schemaHashes: SCHEMA_HASHES_BY_VERSION,
 });
 
-// 6. Export for use in your app
+// 5. Export for use in your app
 export { storage };
 
 // Example usage in a React component:

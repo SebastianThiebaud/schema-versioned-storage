@@ -11,13 +11,19 @@ import { createAsyncStorageAdapter } from '../src/adapters/async-storage';
 import { StorageProvider, useStorage, useStorageInitialized } from '../src/react';
 import { z } from 'zod';
 
-// 1. Define your schema
+// 1. Define your schema with inline defaults
 const persistedSchema = z.object({
+  /**
+   * Schema version for migration support
+   * The default value is set at runtime in persisted.ts
+   */
   _version: z.number(),
-  preferences: z.object({
-    colorScheme: z.enum(['system', 'light', 'dark']).default('system'),
-    language: z.string().default('en'),
-  }),
+  preferences: z
+    .object({
+      colorScheme: z.enum(['system', 'light', 'dark']).default('system'),
+      language: z.string().default('en'),
+    })
+    .default({ colorScheme: 'system', language: 'en' }),
 });
 
 type PersistedSchema = z.infer<typeof persistedSchema>;
@@ -25,13 +31,6 @@ type PersistedSchema = z.infer<typeof persistedSchema>;
 // 2. Create storage instance
 const storage = createPersistedState({
   schema: persistedSchema,
-  defaults: (version): PersistedSchema => ({
-    _version: version,
-    preferences: {
-      colorScheme: 'system' as const,
-      language: 'en',
-    },
-  }),
   storageKey: 'MY_APP_STATE',
   storage: createAsyncStorageAdapter(),
   migrations: [],

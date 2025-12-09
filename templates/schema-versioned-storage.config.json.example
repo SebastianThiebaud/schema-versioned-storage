@@ -3,9 +3,6 @@
     "file": "./src/schema.ts",
     "hashesOutput": "./src/schema-hashes.ts"
   },
-  "defaults": {
-    "file": "./src/defaults.ts"
-  },
   "migrations": {
     "dir": "./src/migrations",
     "indexPath": "./src/migrations/index.ts",

@@ -7,57 +7,31 @@ import type { Migration } from "../../src/types";
 // Version 1 schema
 const schemaV1 = z.object({
   _version: z.number(),
-  name: z.string(),
+  name: z.string().default(""),
 });
 
-type SchemaV1 = z.infer<typeof schemaV1>;
+type SchemaV1 = z.output<typeof schemaV1>;
 
 // Version 2 schema (adds email field)
 const schemaV2 = z.object({
   _version: z.number(),
-  name: z.string(),
-  email: z.string(),
+  name: z.string().default(""),
+  email: z.string().default(""),
 });
 
-type SchemaV2 = z.infer<typeof schemaV2>;
+type SchemaV2 = z.output<typeof schemaV2>;
 
 // Version 3 schema (adds preferences)
 const schemaV3 = z.object({
   _version: z.number(),
-  name: z.string(),
-  email: z.string(),
+  name: z.string().default(""),
+  email: z.string().default(""),
   preferences: z.object({
-    theme: z.enum(["light", "dark"]),
-  }),
+    theme: z.enum(["light", "dark"]).default("light"),
+  }).default({ theme: "light" }),
 });
 
-type SchemaV3 = z.infer<typeof schemaV3>;
-
-function createDefaultsV1(version: number): SchemaV1 {
-  return {
-    _version: version,
-    name: "",
-  };
-}
-
-function createDefaultsV2(version: number): SchemaV2 {
-  return {
-    _version: version,
-    name: "",
-    email: "",
-  };
-}
-
-function createDefaultsV3(version: number): SchemaV3 {
-  return {
-    _version: version,
-    name: "",
-    email: "",
-    preferences: {
-      theme: "light",
-    },
-  };
-}
+type SchemaV3 = z.output<typeof schemaV3>;
 
 // Migration from v1 to v2
 const migrationV1ToV2: Migration<SchemaV2> = {
@@ -108,7 +82,6 @@ describe("Integration: Migrations", () => {
 
     const storage = createPersistedState({
       schema: schemaV2,
-      defaults: createDefaultsV2,
       storageKey: "test-storage",
       storage: adapter,
       migrations: [migrationV1ToV2],
@@ -138,7 +111,6 @@ describe("Integration: Migrations", () => {
 
     const storage = createPersistedState({
       schema: schemaV3,
-      defaults: createDefaultsV3,
       storageKey: "test-storage",
       storage: adapter,
       migrations: [migrationV1ToV2, migrationV2ToV3],
@@ -152,7 +124,7 @@ describe("Integration: Migrations", () => {
     expect(state._version).toBe(3);
     expect(state.name).toBe("John Doe");
     expect(state.email).toBe("");
-    expect(state.preferences.theme).toBe("light");
+    expect(state.preferences?.theme).toBe("light");
   });
 
   it("should preserve data during migration", async () => {
@@ -170,7 +142,6 @@ describe("Integration: Migrations", () => {
 
     const storage = createPersistedState({
       schema: schemaV3,
-      defaults: createDefaultsV3,
       storageKey: "test-storage",
       storage: adapter,
       migrations: [migrationV2ToV3],
@@ -184,6 +155,6 @@ describe("Integration: Migrations", () => {
     expect(state._version).toBe(3);
     expect(state.name).toBe("John Doe");
     expect(state.email).toBe("john@example.com"); // Preserved!
-    expect(state.preferences.theme).toBe("light");
+    expect(state.preferences?.theme).toBe("light");
   });
 });

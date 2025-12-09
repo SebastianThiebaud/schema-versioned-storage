@@ -13,19 +13,11 @@ import {
 // Test schema
 const testSchema = z.object({
   _version: z.number(),
-  name: z.string(),
-  count: z.number(),
+  name: z.string().default("default"),
+  count: z.number().default(0),
 });
 
-type TestSchema = z.infer<typeof testSchema>;
-
-function createDefaults(version: number): TestSchema {
-  return {
-    _version: version,
-    name: "default",
-    count: 0,
-  };
-}
+type TestSchema = z.output<typeof testSchema>;
 
 describe("StorageProvider and hooks", () => {
   let storage: ReturnType<typeof createPersistedState<TestSchema>>;
@@ -33,7 +25,6 @@ describe("StorageProvider and hooks", () => {
   beforeEach(async () => {
     storage = createPersistedState({
       schema: testSchema,
-      defaults: createDefaults,
       storageKey: "test-storage",
       storage: createMemoryAdapter(),
       migrations: [],
@@ -249,9 +240,15 @@ describe("StorageProvider and hooks", () => {
     });
 
     it("should work with nested providers", async () => {
+      // Create a schema with different defaults for inner storage
+      const innerSchema = z.object({
+        _version: z.number(),
+        name: z.string().default("inner"),
+        count: z.number().default(1),
+      });
+      
       const innerStorage = createPersistedState({
-        schema: testSchema,
-        defaults: (v) => ({ _version: v, name: "inner", count: 1 }),
+        schema: innerSchema,
         storageKey: "inner-storage",
         storage: createMemoryAdapter(),
         migrations: [],

@@ -7,28 +7,15 @@ import { createMemoryAdapter } from "../../src/adapters/memory";
 const testSchema = z.object({
   _version: z.number(),
   user: z.object({
-    name: z.string(),
-    email: z.string(),
-  }),
+    name: z.string().default(""),
+    email: z.string().default(""),
+  }).default({ name: "", email: "" }),
   preferences: z.object({
     theme: z.enum(["light", "dark"]).default("light"),
-  }),
+  }).default({ theme: "light" }),
 });
 
-type TestSchema = z.infer<typeof testSchema>;
-
-function createDefaults(version: number): TestSchema {
-  return {
-    _version: version,
-    user: {
-      name: "",
-      email: "",
-    },
-    preferences: {
-      theme: "light",
-    },
-  };
-}
+type TestSchema = z.output<typeof testSchema>;
 
 describe("Integration: Full Flow", () => {
   let storage: ReturnType<typeof createPersistedState<TestSchema>>;
@@ -36,7 +23,6 @@ describe("Integration: Full Flow", () => {
   beforeEach(() => {
     storage = createPersistedState({
       schema: testSchema,
-      defaults: createDefaults,
       storageKey: "test-storage",
       storage: createMemoryAdapter(),
       migrations: [],

@@ -7,27 +7,18 @@ import type { Migration } from "../../src/types";
 // Test schema
 const testSchema = z.object({
   _version: z.number(),
-  name: z.string(),
-  count: z.number(),
+  name: z.string().default("default"),
+  count: z.number().default(0),
 });
 
-type TestSchema = z.infer<typeof testSchema>;
-
-function createDefaults(version: number): TestSchema {
-  return {
-    _version: version,
-    name: "default",
-    count: 0,
-  };
-}
+type TestSchema = z.output<typeof testSchema>;
 
 describe("createPersistedState", () => {
-  let storage: ReturnType<typeof createPersistedState<TestSchema>>;
+  let storage: ReturnType<typeof createPersistedState<typeof testSchema>>;
 
   beforeEach(() => {
     storage = createPersistedState({
       schema: testSchema,
-      defaults: createDefaults,
       storageKey: "test-storage",
       storage: createMemoryAdapter(),
       migrations: [],
@@ -51,7 +42,6 @@ describe("createPersistedState", () => {
 
     storage = createPersistedState({
       schema: testSchema,
-      defaults: createDefaults,
       storageKey: "test-storage",
       storage: adapter,
       migrations: [],
@@ -138,7 +128,6 @@ describe("createPersistedState", () => {
 
     storage = createPersistedState({
       schema: testSchema,
-      defaults: createDefaults,
       storageKey: "test-storage",
       storage: adapter,
       migrations,
@@ -165,7 +154,6 @@ describe("createPersistedState", () => {
 
     storage = createPersistedState({
       schema: testSchema,
-      defaults: createDefaults,
       storageKey: "test-storage",
       storage: adapter,
       migrations: [],
@@ -187,7 +175,6 @@ describe("createPersistedState", () => {
 
     storage = createPersistedState({
       schema: testSchema,
-      defaults: createDefaults,
       storageKey: "test-storage",
       storage: adapter,
       migrations: [],
@@ -210,7 +197,6 @@ describe("createPersistedState", () => {
 
     storage = createPersistedState({
       schema: testSchema,
-      defaults: createDefaults,
       storageKey: "test-storage",
       storage: adapter,
       migrations: [],
@@ -235,7 +221,6 @@ describe("createPersistedState", () => {
 
     storage = createPersistedState({
       schema: testSchema,
-      defaults: createDefaults,
       storageKey: "test-storage",
       storage: errorAdapter,
       migrations: [],
@@ -259,7 +244,6 @@ describe("createPersistedState", () => {
 
     storage = createPersistedState({
       schema: testSchema,
-      defaults: createDefaults,
       storageKey: "test-storage",
       storage: errorAdapter,
       migrations: [],
@@ -284,7 +268,6 @@ describe("createPersistedState", () => {
 
     storage = createPersistedState({
       schema: testSchema,
-      defaults: createDefaults,
       storageKey: "test-storage",
       storage: errorAdapter,
       migrations: [],
@@ -306,7 +289,6 @@ describe("createPersistedState", () => {
 
     storage = createPersistedState({
       schema: testSchema,
-      defaults: createDefaults,
       storageKey: "test-storage",
       storage: adapter,
       migrations: [],
@@ -327,7 +309,6 @@ describe("createPersistedState", () => {
 
     storage = createPersistedState({
       schema: testSchema,
-      defaults: createDefaults,
       storageKey: "test-storage",
       storage: adapter,
       migrations: [],
@@ -371,7 +352,6 @@ describe("createPersistedState", () => {
   it("should return empty string when schema hash is not found", async () => {
     storage = createPersistedState({
       schema: testSchema,
-      defaults: createDefaults,
       storageKey: "test-storage",
       storage: createMemoryAdapter(),
       migrations: [],

@@ -88,39 +88,29 @@ npm install @react-native-async-storage/async-storage
 
 ## Quick Start
 
-### 1. Define your schema
+### 1. Define your schema with inline defaults
 
 ```typescript
 // src/schema.ts
 import { z } from 'zod';
 
 export const persistedSchema = z.object({
+  /**
+   * Schema version for migration support
+   * The default value is set at runtime in persisted.ts
+   */
   _version: z.number(),
-  preferences: z.object({
-    colorScheme: z.enum(['system', 'light', 'dark']).default('system'),
-  }),
+  preferences: z
+    .object({
+      colorScheme: z.enum(['system', 'light', 'dark']).default('system'),
+    })
+    .default({ colorScheme: 'system' }),
 });
 
 export type PersistedSchema = z.infer<typeof persistedSchema>;
 ```
 
-### 2. Define defaults
-
-```typescript
-// src/defaults.ts
-import type { PersistedSchema } from './schema';
-
-export function createDefaults(version: number): PersistedSchema {
-  return {
-    _version: version,
-    preferences: {
-      colorScheme: 'system',
-    },
-  };
-}
-```
-
-### 3. Create migrations (optional)
+### 2. Create migrations (optional)
 
 ```typescript
 // src/migrations/2-add-feature.ts
@@ -148,7 +138,7 @@ const migration: Migration<PersistedSchema> = {
 export default migration;
 ```
 
-### 4. Configure paths (optional)
+### 3. Configure paths (optional)
 
 Add configuration to your `package.json` to avoid passing paths every time:
 
@@ -175,7 +165,7 @@ Add configuration to your `package.json` to avoid passing paths every time:
 
 **Note:** If you don't configure paths, the scripts will use defaults (`./src/...`). See the [Configuration](#configuration) section for all options.
 
-### 5. Generate migrations index and schema hashes
+### 4. Generate migrations index and schema hashes
 
 Run the generation scripts using the CLI tool:
 
@@ -208,20 +198,18 @@ npm run generate:schema-hashes
 
 **Note:** The CLI tool (`svs`) is automatically installed with the package. You can use it directly with `npx svs` or add it to your npm scripts.
 
-### 6. Initialize storage
+### 5. Initialize storage
 
 ```typescript
 // src/storage.ts
 import { createPersistedState } from '@sebastianthiebaud/schema-versioned-storage';
 import { createAsyncStorageAdapter } from '@sebastianthiebaud/schema-versioned-storage/adapters/async-storage';
 import { persistedSchema } from './schema';
-import { createDefaults } from './defaults';
 import { getMigrations, getCurrentSchemaVersion } from './migrations';
 import { SCHEMA_HASHES_BY_VERSION } from './schema-hashes';
 
 export const storage = createPersistedState({
   schema: persistedSchema,
-  defaults: createDefaults,
   storageKey: 'MY_APP_STATE',
   storage: createAsyncStorageAdapter(),
   migrations: Array.from(getMigrations().values()),
@@ -233,7 +221,7 @@ export const storage = createPersistedState({
 await storage.init();
 ```
 
-### 7. Use the storage
+### 6. Use the storage
 
 ```typescript
 // Get values - method-based access
@@ -312,13 +300,14 @@ Creates a persisted state instance.
 
 **Parameters:**
 
-- `schema`: Zod schema for your state
-- `defaults`: Function that returns default values for a given version
+- `schema`: Zod schema for your state (with inline defaults using `.default()`)
 - `storageKey`: Key to use in storage
 - `storage`: Storage adapter instance
 - `migrations`: Array of migrations (optional)
 - `getCurrentVersion`: Function that returns the current schema version
 - `schemaHashes`: Record mapping version numbers to schema hashes
+
+**Note:** Default values are now defined inline in your Zod schema using `.default()`. The `_version` field is automatically set at runtime.
 
 **Returns:** `PersistedState<TSchema>`
 
@@ -510,12 +499,12 @@ export default migration;
 
 ## Configuration
 
-You can configure the paths for your schema, defaults, and migrations in several ways. Configuration priority (highest to lowest):
+You can configure the paths for your schema and migrations in several ways. Configuration priority (highest to lowest):
 
 1. **CLI Arguments** (highest priority)
 2. **Config File** (via `--config`)
 3. **package.json** (if `schemaVersionedStorage` field exists)
-4. **Defaults** (lowest priority)
+4. **Default paths** (lowest priority)
 
 ### Option 1: Using package.json (Recommended)
 
@@ -530,9 +519,6 @@ Add a `schemaVersionedStorage` field to your `package.json`:
     "schema": {
       "file": "./lib/storage/schema.ts",
       "hashesOutput": "./lib/storage/schema-hashes.ts"
-    },
-    "defaults": {
-      "file": "./lib/storage/defaults.ts"
     },
     "migrations": {
       "dir": "./lib/storage/migrations",
@@ -616,9 +602,6 @@ Create a `schema-versioned-storage.config.json` file in your project root. You c
     "file": "./lib/storage/schema.ts",
     "hashesOutput": "./lib/storage/schema-hashes.ts"
   },
-  "defaults": {
-    "file": "./lib/storage/defaults.ts"
-  },
   "migrations": {
     "dir": "./lib/storage/migrations",
     "indexPath": "./lib/storage/migrations/index.ts",
@@ -644,8 +627,6 @@ Then run the scripts with the config file:
 npx svs generate:migrations --config schema-versioned-storage.config.json
 npx svs generate:schema-hashes --config schema-versioned-storage.config.json
 ```
-
-**Note:** The `defaults.file` field in the nested format is for documentation purposes only. The defaults file path is not used by the scripts, but you should keep it in sync with your actual defaults file location.
 
 **Note:** CLI arguments will override values from `package.json` or config files.
 

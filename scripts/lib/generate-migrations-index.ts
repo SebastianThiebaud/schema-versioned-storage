@@ -58,7 +58,7 @@ function getDefaultConfig(cwd: string = process.cwd()) {
   return {
     migrationsDir: defaultConfig.migrationsDir,
     indexPath: defaultConfig.indexPath,
-    typesPath: getPackageName(cwd), // Use package name by default
+    typesPath: getPackageName(cwd), // Use schema-versioned-storage package name for Migration type imports
   };
 }
 

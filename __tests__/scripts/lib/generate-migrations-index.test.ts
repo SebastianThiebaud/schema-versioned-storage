@@ -101,7 +101,9 @@ describe("generate-migrations-index", () => {
       const config = parseArgs([], tempDir);
       expect(config.migrationsDir).toBe("./partial/migrations");
       expect(config.indexPath).toBe(defaultConfig.indexPath); // Uses default
-      expect(config.typesPath).toBe("test-app"); // Uses package name from package.json
+      // typesPath should be the schema-versioned-storage package name (for Migration type imports)
+      // Since node_modules doesn't exist in test, it falls back to the default
+      expect(config.typesPath).toBe("schema-versioned-storage");
     });
 
     it("should load from config file with nested format", async () => {

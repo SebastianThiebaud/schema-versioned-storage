@@ -15,11 +15,10 @@ export interface StorageAdapter {
  * Configuration for creating a persisted state
  */
 export interface PersistedStateConfig<TSchema> {
-  schema: z.ZodSchema<TSchema>;
-  defaults: (version: number) => TSchema;
+  schema: z.ZodType<TSchema>;
   storageKey: string;
   storage: StorageAdapter;
-  migrations?: Migration<TSchema>[];
+  migrations?: Migration<any>[]; // Allow any migration type since migrations can return intermediate states
   getCurrentVersion: () => number;
   schemaHashes: Record<number, string>;
 }
@@ -44,13 +43,15 @@ export interface PersistedState<TSchema> {
 
 /**
  * Create a persisted state instance
+ * Automatically infers the output type from the schema (handles defaults correctly)
  */
-export function createPersistedState<TSchema>(
-  config: PersistedStateConfig<TSchema>,
-): PersistedState<TSchema> {
+export function createPersistedState<TSchema extends z.ZodTypeAny>(
+  config: Omit<PersistedStateConfig<z.output<TSchema>>, "schema"> & {
+    schema: TSchema;
+  },
+): PersistedState<z.output<TSchema>> {
   const {
     schema,
-    defaults,
     storageKey,
     storage,
     migrations = [],
@@ -58,9 +59,18 @@ export function createPersistedState<TSchema>(
     schemaHashes,
   } = config;
 
-  let state: TSchema | null = null;
+  type OutputSchema = z.output<TSchema>;
+  let state: OutputSchema | null = null;
   let currentVersion: number = getCurrentVersion();
   let initialized = false;
+
+  /**
+   * Get default values from schema by parsing with only _version set
+   * This uses Zod's inline defaults defined in the schema
+   */
+  function getDefaults(version: number): OutputSchema {
+    return schema.parse({ _version: version }) as OutputSchema;
+  }
 
   /**
    * Initialize the persisted state
@@ -86,7 +96,7 @@ export function createPersistedState<TSchema>(
               storedVersion,
               currentVersion,
               migrations,
-            );
+            ) as OutputSchema;
           } else if (storedVersion === currentVersion) {
             // Validate schema hash if available
             const expectedHash = schemaHashes[currentVersion];
@@ -95,26 +105,26 @@ export function createPersistedState<TSchema>(
               // The hash is computed at build time from the schema definition
               // We'll validate the schema structure instead
             }
-            state = parsed;
+            state = parsed as OutputSchema;
           } else {
             // Stored version is newer than current - this shouldn't happen
             // but we'll use defaults to be safe
-            state = defaults(currentVersion);
+            state = getDefaults(currentVersion);
           }
 
           // Validate against schema
-          state = schema.parse(state);
+          state = schema.parse(state) as OutputSchema;
         } catch (error) {
           // Use defaults on error
-          state = defaults(currentVersion);
+          state = getDefaults(currentVersion);
         }
       } else {
         // No stored data, use defaults
-        state = defaults(currentVersion);
+        state = getDefaults(currentVersion);
       }
     } catch (error) {
       // Use defaults on error
-      state = defaults(currentVersion);
+      state = getDefaults(currentVersion);
     }
 
     // Ensure state has _version
@@ -128,7 +138,7 @@ export function createPersistedState<TSchema>(
   /**
    * Get a value from the state
    */
-  function get<K extends keyof TSchema>(key: K): TSchema[K] {
+  function get<K extends keyof OutputSchema>(key: K): OutputSchema[K] {
     if (!initialized || !state) {
       throw new Error("PersistedState not initialized. Call init() first.");
     }
@@ -138,9 +148,9 @@ export function createPersistedState<TSchema>(
   /**
    * Set a value in the state
    */
-  async function set<K extends keyof TSchema>(
+  async function set<K extends keyof OutputSchema>(
     key: K,
-    value: TSchema[K],
+    value: OutputSchema[K],
   ): Promise<void> {
     if (!initialized || !state) {
       throw new Error("PersistedState not initialized. Call init() first.");
@@ -149,7 +159,7 @@ export function createPersistedState<TSchema>(
     (state as any)[key] = value;
 
     // Validate the updated state
-    const validated = schema.parse(state);
+    const validated = schema.parse(state) as OutputSchema;
     state = validated;
 
     // Persist to storage
@@ -163,9 +173,9 @@ export function createPersistedState<TSchema>(
   /**
    * Update a value in the state using an updater function
    */
-  async function update<K extends keyof TSchema>(
+  async function update<K extends keyof OutputSchema>(
     key: K,
-    updater: (prev: TSchema[K]) => TSchema[K],
+    updater: (prev: OutputSchema[K]) => OutputSchema[K],
   ): Promise<void> {
     if (!initialized || !state) {
       throw new Error("PersistedState not initialized. Call init() first.");
@@ -179,7 +189,7 @@ export function createPersistedState<TSchema>(
   /**
    * Get all state
    */
-  function getAll(): TSchema {
+  function getAll(): OutputSchema {
     if (!initialized || !state) {
       throw new Error("PersistedState not initialized. Call init() first.");
     }
@@ -190,7 +200,7 @@ export function createPersistedState<TSchema>(
    * Clear all state
    */
   async function clear(): Promise<void> {
-    state = defaults(currentVersion);
+    state = getDefaults(currentVersion);
     try {
       await storage.removeItem(storageKey);
     } catch (error) {
