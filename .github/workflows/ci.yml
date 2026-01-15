@@ -59,6 +59,11 @@ jobs:
       - name: Check build output
         run: |
           test -d dist || (echo "dist directory not found" && exit 1)
-          test -f dist/index.js || (echo "dist/index.js not found" && exit 1)
+          test -f dist/index.cjs || (echo "dist/index.cjs not found" && exit 1)
+          test -f dist/index.mjs || (echo "dist/index.mjs not found" && exit 1)
           test -f dist/index.d.ts || (echo "dist/index.d.ts not found" && exit 1)
+          test -f dist/adapters/index.cjs || (echo "dist/adapters/index.cjs not found" && exit 1)
+          test -f dist/adapters/index.mjs || (echo "dist/adapters/index.mjs not found" && exit 1)
+          test -f dist/react/index.cjs || (echo "dist/react/index.cjs not found" && exit 1)
+          test -f dist/react/index.mjs || (echo "dist/react/index.mjs not found" && exit 1)
 
