@@ -7,7 +7,7 @@ export default defineConfig([
     dts: true,
     outExtension({ format }) {
       return {
-        js: format === 'esm' ? '.mjs' : '.js',
+        js: format === 'esm' ? '.mjs' : '.cjs',
       };
     },
   },
@@ -22,7 +22,7 @@ export default defineConfig([
     dts: true,
     outExtension({ format }) {
       return {
-        js: format === 'esm' ? '.mjs' : '.js',
+        js: format === 'esm' ? '.mjs' : '.cjs',
       };
     },
   },
@@ -34,7 +34,7 @@ export default defineConfig([
     dts: true,
     outExtension({ format }) {
       return {
-        js: format === 'esm' ? '.mjs' : '.js',
+        js: format === 'esm' ? '.mjs' : '.cjs',
       };
     },
   },
